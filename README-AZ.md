@@ -93,11 +93,14 @@ dna --ote account get
 dna --ote domain search example.com
 dna --ote product tlds --filter-text com
 
-# 3. Alışı önizləyin, sonra həyata keçirin (təsdiq istəyəcək)
-dna --ote domain register example.com --ns tr.apiname.com,eu.apiname.com --handle <HANDLE> --dry-run
-dna --ote domain register example.com --ns tr.apiname.com,eu.apiname.com --handle <HANDLE>
+# 3. Bir dəfə əlaqə yaradın: dna məlumatları soruşur və onu defolt əlaqəniz edir
+dna --ote contact create
 
-# 4. Canlı mühit
+# 4. Alışı önizləyin, sonra həyata keçirin (təsdiq istəyəcək)
+dna --ote domain register example.com --dry-run
+dna --ote domain register example.com
+
+# 5. Canlı mühit
 dna auth login
 dna domain list
 ```

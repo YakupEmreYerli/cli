@@ -229,13 +229,25 @@ func (s *shell) welcome() string {
 	lines := []string{""}
 	lines = append(lines, center(p.Logo(inner))...)
 	lines = append(lines, "")
-	lines = append(lines, center([]string{p.Muted("Domains, DNS, SSL and hosting from your terminal  ·  ") + p.Fg(ui.Green, displayVersion(s.app.Build.Version))})...)
-	lines = append(lines, "")
-	lines = append(lines, center([]string{
-		p.Fg(ui.Green, "▸ ") + "Type a name" + p.Muted(" to see which extensions are free, then ") + p.Fg(ui.Green, "↓") + p.Muted(" to pick one"),
-		p.Fg(ui.Green, "▸ ") + "Press " + p.Fg(ui.Green, "↓") + p.Muted(" on an empty line for quick actions: your domains, DNS, balance"),
-		p.Fg(ui.Green, "▸ ") + p.Command("/") + p.Muted(" lists every command · ") + p.Command("?") + p.Muted(" shows the keys · ") + p.Command("Esc") + p.Muted(" always goes back"),
-	})...)
+	ver := p.Fg(ui.Green, displayVersion(s.app.Build.Version))
+	if inner >= 80 {
+		lines = append(lines, center([]string{p.Muted("Domains, DNS, SSL and hosting from your terminal  ·  ") + ver})...)
+		lines = append(lines, "")
+		lines = append(lines, center([]string{
+			p.Fg(ui.Green, "▸ ") + "Type a name" + p.Muted(" to see which extensions are free, then ") + p.Fg(ui.Green, "↓") + p.Muted(" to pick one"),
+			p.Fg(ui.Green, "▸ ") + "Press " + p.Fg(ui.Green, "↓") + p.Muted(" on an empty line for quick actions: your domains, DNS, balance"),
+			p.Fg(ui.Green, "▸ ") + p.Command("/") + p.Muted(" lists every command · ") + p.Command("?") + p.Muted(" shows the keys · ") + p.Command("Esc") + p.Muted(" always goes back"),
+		})...)
+	} else {
+		// narrow terminals: the same, shorter
+		lines = append(lines, center([]string{p.Muted("Domains · DNS · SSL · hosting  ·  ") + ver})...)
+		lines = append(lines, "")
+		lines = append(lines, center([]string{
+			p.Fg(ui.Green, "▸ ") + "Type a name" + p.Muted(": free extensions, prices"),
+			p.Fg(ui.Green, "▸ ") + p.Fg(ui.Green, "↓") + p.Muted(" on an empty line: quick actions"),
+			p.Fg(ui.Green, "▸ ") + p.Command("/") + p.Muted(" commands · ") + p.Command("?") + p.Muted(" keys · ") + p.Command("Esc") + p.Muted(" back"),
+		})...)
+	}
 	lines = append(lines, "")
 	box := p.Box(lines, w, ui.GreenDeep, p.BoldFg(ui.Green, "Domain Name API")+p.Muted(" · dna"))
 	return "\n" + strings.Join(box, "\n") + "\n"
@@ -268,6 +280,11 @@ func (s *shell) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return s, s.onRunDone(m)
 	case dryRunMsg:
 		return s, s.onDryRun(m)
+	case contactStepMsg:
+		return s, s.onContactStep(m)
+	case contactsFoundMsg:
+		s.onContactsFound(m)
+		return s, nil
 	case domainsMsg:
 		return s, s.onDomains(m)
 	case availMsg:
@@ -331,6 +348,11 @@ func (s *shell) View() string {
 		out = append(out, o.view(s, w)...)
 	} else {
 		s.in.Width = w - 7
+		if w < 80 {
+			s.in.Placeholder = "Type a domain, or ↓ for actions"
+		} else {
+			s.in.Placeholder = "Type a domain name to search it, or press ↓ for quick actions"
+		}
 		border := ui.GreenDeep
 		if s.run.active || s.focus != focusInput {
 			border = ui.Muted
@@ -346,6 +368,12 @@ func (s *shell) View() string {
 		out = append(out, "  "+s.p.Fg(ui.Amber, s.notice))
 	}
 	out = append(out, s.statusLine(w))
+	// A line wider than the terminal would wrap and break the layout.
+	for i, l := range out {
+		if ui.Width(l) > w {
+			out[i] = ui.TruncateStyled(l, w)
+		}
+	}
 	return strings.Join(out, "\n")
 }
 
@@ -381,8 +409,18 @@ func (s *shell) statusLine(w int) string {
 		}
 		switch {
 		case st.acct != nil:
-			left += p.Muted("  ·  ") + p.Bold(st.acct.ResellerName) + p.Muted("  ·  ") + p.Fg(ui.Green, fmtMoney(st.acct.UsdBalance)+" USD") +
-				p.Muted(" · ") + p.Fg(ui.Green, fmtMoney(st.acct.TryBalance)+" TRY")
+			usd := p.Fg(ui.Green, fmtMoney(st.acct.UsdBalance)+" USD")
+			try := p.Muted(" · ") + p.Fg(ui.Green, fmtMoney(st.acct.TryBalance)+" TRY")
+			name := p.Muted("  ·  ") + p.Bold(st.acct.ResellerName)
+			// drop the least important parts on a narrow terminal
+			switch {
+			case ui.Width(left+name+p.Muted("  ·  ")+usd+try) <= w-2:
+				left += name + p.Muted("  ·  ") + usd + try
+			case ui.Width(left+name+p.Muted("  ·  ")+usd) <= w-2:
+				left += name + p.Muted("  ·  ") + usd
+			default:
+				left += p.Muted("  ·  ") + usd
+			}
 		case st.err != nil:
 			left += p.Muted("  ·  ") + p.Fg(ui.Amber, "▲ "+shortErr(st.err)) + p.Muted(" · log in with ") + p.Command("/login")
 		}

@@ -105,7 +105,7 @@ func groupDoc(group *cobra.Command) string {
 			if sub.Hidden {
 				continue
 			}
-			if _, isOp := sub.Annotations["operation"]; isOp {
+			if _, isOp := sub.Annotations["operation"]; isOp || sub.Annotations["local"] != "" {
 				b.WriteString(commandDoc(sub))
 				continue
 			}

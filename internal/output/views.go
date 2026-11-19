@@ -93,7 +93,7 @@ func viewSearch(h *human, v any) (string, bool) {
 	sb.WriteString("\n")
 	switch tone {
 	case ui.Good:
-		sb.WriteString("  " + p.Hint(p.Muted("Register it (preview first): ")+p.Command("dna domain register "+name+" --handle <handle> --ns <ns1>,<ns2> --dry-run")) + "\n\n")
+		sb.WriteString("  " + p.Hint(p.Muted("Register it (preview first): ")+p.Command("dna domain register "+name+" --dry-run")) + "\n\n")
 	case ui.Bad:
 		sb.WriteString("  " + p.Hint(p.Muted("Yours at another registrar? ")+p.Command("dna domain transfer-check "+name+" <auth-code>")) + "\n\n")
 	default:
@@ -151,7 +151,7 @@ func viewBulkSearch(h *human, v any) (string, bool) {
 	sb.WriteString("\n" + p.Render(t, h.width))
 	sb.WriteString(fmt.Sprintf("\n  %s of %d available\n", p.BoldFg(ui.Green, strconv.Itoa(free)), len(list)))
 	if firstFree != "" {
-		sb.WriteString("  " + p.Hint(p.Muted("Register one (preview first): ")+p.Command("dna domain register "+firstFree+" --handle <handle> --ns <ns1>,<ns2> --dry-run")) + "\n")
+		sb.WriteString("  " + p.Hint(p.Muted("Register one (preview first): ")+p.Command("dna domain register "+firstFree+" --dry-run")) + "\n")
 	}
 	sb.WriteString("\n")
 	return sb.String(), true

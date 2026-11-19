@@ -15,6 +15,11 @@ Create a reusable contact handle.
 Creates a contact and returns its handle, which `dna domain register --handle` accepts. country is a
 2-letter ISO code; phone and phoneCountryCode are digits only (e.g. 90 and 5551234567).
 
+On the command line dna saves the new handle on this computer (`dna contact list`) and, when there
+is no default contact yet, makes it the default that `dna domain register` uses without --handle. At
+a terminal it asks for the details you leave out, and --phone takes the full number (+90 555 123 45
+67).
+
 - **Safety:** changes data (free)
 - **API:** `POST /api/v1/contacts`
 - **Body:** `ContactCreateInput`
@@ -29,10 +34,10 @@ Every input can also be given as JSON with --body (inline, @file or - for stdin)
 | `--last-name` | string | Last name (at least 2 letters) (required) |
 | `--email` | string | E-mail address (required) |
 | `--address` | string | Street address (required) |
-| `--phone-country-code` | string | Country calling code, digits only without +, e.g. 90 (required) |
-| `--phone` | string | Phone number, digits only (required) |
+| `--phone-country-code` | string | Country calling code, digits only without +, e.g. 90 (on the command line: not needed when --phone starts with +) (required) |
+| `--phone` | string | Phone number, digits only (on the command line also +90 555 123 45 67, split for you) (required) |
 | `--postal-code` | string | Postal code (required) |
-| `--country` | string | 2-letter ISO country code, e.g. TR, US (required) |
+| `--country` | string | 2-letter ISO country code, e.g. TR, US (on the command line: taken from a +code phone when only one country uses it) (required) |
 | `--city` | string | City (required) |
 | `--state` | string | State or province (required) |
 | `--company-name` | string | Company name (defaults to first + last name) |
@@ -44,7 +49,39 @@ Every input can also be given as JSON with --body (inline, @file or - for stdin)
 **Examples**
 
 ```bash
-dna contact create --first-name Ada --last-name Lovelace --email ada@example.com --address "1 Example St" --city Istanbul --state Istanbul --country TR --postal-code 34000 --phone-country-code 90 --phone 5551234567
+# At a terminal: dna asks for each detail
+dna contact create
+# Country TR and code 90 come from the phone
+dna contact create --first-name Ada --last-name Lovelace --email ada@example.com --phone "+90 555 123 45 67" --address "1 Example St" --city Istanbul --state Istanbul --postal-code 34000
+```
+
+## dna contact default
+
+```
+dna contact default [handle]
+```
+
+Without an argument, shows the default contact of the current profile. With a handle, checks it with the API, saves it and makes it the default: `dna domain register` then uses it for all four roles when you leave out --handle.
+
+**Examples**
+
+```bash
+dna contact default
+dna contact default D-123456789
+```
+
+## dna contact forget
+
+```
+dna contact forget <handle>
+```
+
+Removes a handle from the current profile's contact book (and as the default). The contact itself stays at the registry; nothing is sent to the API.
+
+**Examples**
+
+```bash
+dna contact forget D-123456789
 ```
 
 ## dna contact get
@@ -71,6 +108,29 @@ Every input can also be given as JSON with --body (inline, @file or - for stdin)
 
 ```bash
 dna contact get DNA-12345
+```
+
+## dna contact list
+
+```
+dna contact list [flags]
+```
+
+Lists the contact handles saved for the current profile: the ones `dna contact create` made, the ones seen in `dna domain info` and `dna contact get`, and, with --scan, the ones on every domain of the account (the API has no call that lists contacts, so dna keeps this book on this computer).
+
+The default contact is what `dna domain register` uses for all four roles when you leave out --handle.
+
+| flag | type | description |
+|---|---|---|
+| `--limit` | int | With --scan, read at most this many domains (0 = all) |
+| `--scan` |  | Also read the contacts of your domains (one request per domain) and save them |
+
+**Examples**
+
+```bash
+dna contact list
+dna contact list --scan          # read the contacts of every domain and save them
+dna contact list -o json --jq '.contacts[].handle'
 ```
 
 ## dna contact resend-verification
@@ -121,10 +181,10 @@ Every input can also be given as JSON with --body (inline, @file or - for stdin)
 | `--last-name` | string | Last name (at least 2 letters) (required) |
 | `--email` | string | E-mail address (required) |
 | `--address` | string | Street address (required) |
-| `--phone-country-code` | string | Country calling code, digits only without +, e.g. 90 (required) |
-| `--phone` | string | Phone number, digits only (required) |
+| `--phone-country-code` | string | Country calling code, digits only without +, e.g. 90 (on the command line: not needed when --phone starts with +) (required) |
+| `--phone` | string | Phone number, digits only (on the command line also +90 555 123 45 67, split for you) (required) |
 | `--postal-code` | string | Postal code (required) |
-| `--country` | string | 2-letter ISO country code, e.g. TR, US (required) |
+| `--country` | string | 2-letter ISO country code, e.g. TR, US (on the command line: taken from a +code phone when only one country uses it) (required) |
 | `--city` | string | City (required) |
 | `--state` | string | State or province (required) |
 | `--company-name` | string | Company name (defaults to first + last name) |

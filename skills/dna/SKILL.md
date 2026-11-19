@@ -29,7 +29,9 @@ This guide is generated from the CLI itself, so it matches the installed version
 8. **Retries.** The CLI already retries rate limits (429) and transient errors on reads. Never blindly retry a billable
    command after a timeout or exit code 8: check the result first (e.g. `dna domain info <domain>`).
 9. **Typical flows**
-   - Register: `domain search` -> (`contact create` if needed) -> `domain register --dry-run` -> approval -> `--yes`.
+   - Register: `domain search` -> `contact list` (saved handles; the default is used when `--handle` is left out,
+     the platform nameservers when `--ns` is) -> (`contact create` if there is none; it becomes the default) ->
+     `domain register --dry-run` -> approval -> `--yes`. Ask the user which contact to use when it is not obvious.
    - Renew: `domain renew-check` -> approval -> `domain renew --period N --yes`.
    - Transfer in: `domain transfer-check <domain> <authcode>` -> approval -> `domain transfer --yes` -> `domain transfer-status`.
    - DNS: `dns list`, `dns add --name www --type A --content 192.0.2.1`, then `dns apply` if the domain is not on the platform nameservers.
@@ -122,5 +124,7 @@ Error JSON (stderr): `{"error":{"kind","code","message","status","fields","hint"
 | `dna ssl revoke <domain>` | destructive | Revoke a certificate (irreversible) |
 | `dna ssl status <domain>` | read | Refresh and show certificate status |
 
+Contact book (on this computer, the API cannot list handles): `dna contact list [--scan]`, `dna contact default [handle]`,
+`dna contact forget <handle>`.
 Other commands: `dna auth login|status|logout`, `dna config show|use|set`, `dna api <path>` (raw request),
 `dna schema [op]`, `dna enums [name]`, `dna doctor`, `dna mcp serve` (MCP server), `dna version`.

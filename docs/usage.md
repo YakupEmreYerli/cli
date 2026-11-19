@@ -131,10 +131,15 @@ Nothing has to be memorised. Everything is a choice with ↑↓ and Enter, and *
   [AI agents](ai-agents.md#mcp-server).
 - **Anything that needs a domain** (`/dns`, `/renew`, *DNS records*, …) opens a searchable list of your domains; a
   domain that is not in the list can be typed in full.
-- **Short forms instead of flags:** *Register* (years, nameservers, contact handle, with the total price), *Renew*
+- **Short forms instead of flags:** *Register* (years, nameservers, contact, with the total price), *Renew*
   (years), *Add a DNS record* (type, name, value, TTL, with an example for each type), *Nameservers*, *Transfer in*
-  (auth code). ←→ change a choice, Enter moves on and submits on the last field. The contact handle and nameservers
-  you used are remembered for the next registration.
+  (auth code). ←→ change a choice, Enter moves on and submits on the last field. The nameservers you used are
+  remembered for the next registration.
+- **Contacts without copying handles:** the *Contact* field of *Register* offers your saved contacts, the default first
+  (Enter lists them all; type to search), plus *New contact…*, a short form that creates the handle on the spot
+  (the phone may include its country code, the country then fills itself in), and *Another handle…*. With no saved
+  contact, the shell reads the contacts of a few of your domains in the background and offers them. `/contact`
+  creates a contact, `/contacts` lists them.
 - **Billable and destructive steps** end in a confirmation box built from a dry run of the exact request (fields,
   price, environment, method and path). *Cancel* is selected by default; nothing is sent until you choose the action
   or press `y`. The balance in the status line updates afterwards.

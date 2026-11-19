@@ -77,7 +77,7 @@ func (a *App) newLoginCmd() *cobra.Command {
 
 			resellerID := strings.TrimSpace(a.flags.resellerID)
 			apiKey := strings.TrimSpace(a.flags.apiKey)
-			in := bufio.NewReader(a.In)
+			in := a.stdin()
 			if keyStdin {
 				b, err := io.ReadAll(in)
 				if err != nil {

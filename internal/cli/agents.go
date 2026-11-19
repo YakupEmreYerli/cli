@@ -348,7 +348,7 @@ func (a agentInfo) found() bool {
 	if a.Exe == "" {
 		return false
 	}
-	_, err := exec.LookPath(a.Exe)
+	_, err := lookPath(a.Exe)
 	return err == nil
 }
 
@@ -356,8 +356,11 @@ func (a agentInfo) found() bool {
 // stable path that survives upgrades), or else this program's own path.
 // Agents often start with a different PATH than your terminal, so the path
 // is absolute.
+// lookPath finds a program on the PATH (replaced in tests).
+var lookPath = exec.LookPath
+
 func dnaPath() string {
-	if p, err := exec.LookPath("dna"); err == nil {
+	if p, err := lookPath("dna"); err == nil {
 		if abs, err := filepath.Abs(p); err == nil {
 			return abs
 		}

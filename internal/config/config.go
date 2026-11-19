@@ -38,6 +38,22 @@ type Profile struct {
 	// ReadOnly blocks every operation that changes something. Useful for
 	// profiles handed to AI agents.
 	ReadOnly bool `json:"read_only,omitempty"`
+
+	// DefaultContact is the handle `dna domain register` uses for all four
+	// contact roles when no --handle is given.
+	DefaultContact string `json:"default_contact,omitempty"`
+	// Contacts are the handles dna created or has seen for this account.
+	Contacts []Contact `json:"contacts,omitempty"`
+}
+
+// Contact is a contact handle dna created or has seen. The API cannot list
+// an account's handles, so dna keeps its own book, one per profile (handles
+// belong to one reseller account and environment).
+type Contact struct {
+	Handle  string `json:"handle"`
+	Name    string `json:"name,omitempty"`
+	Email   string `json:"email,omitempty"`
+	Country string `json:"country,omitempty"`
 }
 
 // File is the on-disk configuration.
@@ -113,6 +129,93 @@ func (f *File) ProfileNames() []string {
 	}
 	sort.Strings(names)
 	return names
+}
+
+// Contacts returns a profile's saved contacts, the default one first, and
+// the default handle.
+func (f *File) Contacts(profile string) ([]Contact, string) {
+	p := f.Profiles[profile]
+	if p == nil {
+		return nil, ""
+	}
+	out := append([]Contact(nil), p.Contacts...)
+	sort.SliceStable(out, func(i, j int) bool {
+		return strings.EqualFold(out[i].Handle, p.DefaultContact) && !strings.EqualFold(out[j].Handle, p.DefaultContact)
+	})
+	return out, p.DefaultContact
+}
+
+// profileFor returns a profile, creating an empty one for env if needed
+// (credentials may come from flags or environment variables alone).
+func (f *File) profileFor(name, env string) *Profile {
+	p := f.Profiles[name]
+	if p == nil {
+		p = &Profile{Environment: env}
+		f.Profiles[name] = p
+	}
+	return p
+}
+
+// RememberContact adds a contact to a profile's book or fills in details it
+// lacked; empty fields never overwrite known ones. It reports whether the
+// book changed.
+func (f *File) RememberContact(profile, env string, c Contact) bool {
+	c.Handle = strings.TrimSpace(c.Handle)
+	if c.Handle == "" {
+		return false
+	}
+	p := f.profileFor(profile, env)
+	for i, old := range p.Contacts {
+		if !strings.EqualFold(old.Handle, c.Handle) {
+			continue
+		}
+		merged := old
+		if c.Name != "" {
+			merged.Name = c.Name
+		}
+		if c.Email != "" {
+			merged.Email = c.Email
+		}
+		if c.Country != "" {
+			merged.Country = c.Country
+		}
+		p.Contacts[i] = merged
+		return merged != old
+	}
+	p.Contacts = append(p.Contacts, c)
+	return true
+}
+
+// SetDefaultContact makes handle the profile's default contact, adding it
+// to the book when it is new.
+func (f *File) SetDefaultContact(profile, env, handle string) {
+	f.RememberContact(profile, env, Contact{Handle: handle})
+	p := f.profileFor(profile, env)
+	for _, c := range p.Contacts {
+		if strings.EqualFold(c.Handle, handle) {
+			p.DefaultContact = c.Handle
+			return
+		}
+	}
+}
+
+// ForgetContact removes a handle from a profile's book (and as its default).
+// It reports whether the handle was there.
+func (f *File) ForgetContact(profile, handle string) bool {
+	p := f.Profiles[profile]
+	if p == nil {
+		return false
+	}
+	for i, c := range p.Contacts {
+		if strings.EqualFold(c.Handle, handle) {
+			p.Contacts = append(p.Contacts[:i], p.Contacts[i+1:]...)
+			if strings.EqualFold(p.DefaultContact, handle) {
+				p.DefaultContact = ""
+			}
+			return true
+		}
+	}
+	return false
 }
 
 // Overrides are values given on the command line.

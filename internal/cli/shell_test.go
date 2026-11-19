@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -21,6 +22,15 @@ func testShell(t *testing.T, api *fakeAPI, width int) *shell {
 	if api != nil {
 		env["DNA_BASE_URL"] = api.srv.URL
 	}
+	// the same programs on every machine: dna at a short path, no agents
+	old := lookPath
+	lookPath = func(name string) (string, error) {
+		if name == "dna" {
+			return "/usr/local/bin/dna", nil
+		}
+		return "", exec.ErrNotFound
+	}
+	t.Cleanup(func() { lookPath = old })
 	a := &App{Getenv: func(k string) string { return env[k] }, Build: BuildInfo{Version: "1.2.0"},
 		StdinTTY: true, StdoutTTY: true, StderrTTY: true, Width: width}
 	s := newShell(a)
@@ -363,6 +373,41 @@ func TestShellDNSForm(t *testing.T) {
 	}
 }
 
+// On a narrow terminal no line may be wider than the screen: a wrapped line
+// breaks the redraw of the whole shell.
+func TestShellNarrowNeverWraps(t *testing.T) {
+	api := newFakeAPI(t)
+	api.json("GET /api/v1/domains", listJSON)
+	s := testShell(t, api, 46)
+	check := func(where string) {
+		t.Helper()
+		for _, l := range strings.Split(s.View(), "\n") {
+			if w := len([]rune(ansiStrip(l))); w > 45 {
+				t.Errorf("%s: line of %d cells: %s", where, w, ansiStrip(l))
+			}
+		}
+	}
+	check("home")
+	for _, line := range strings.Split(ansiStrip(s.welcome()), "\n") {
+		if len([]rune(line)) > 45 {
+			t.Errorf("welcome line too wide: %s", line)
+		}
+	}
+	s.push(s.registerForm("brandname.net", "11.49 USD", s.contacts()))
+	check("register form")
+	s.pop()
+	feed(s, s.agentPicker())
+	keys(s, "enter")
+	check("agent setup")
+	if got := confirmValue([]any{map[string]any{"contactType": "Registrant", "handle": "DNA-1"}, map[string]any{"contactType": "Admin", "handle": "DNA-1"},
+		map[string]any{"contactType": "Tech", "handle": "DNA-1"}, map[string]any{"contactType": "Billing", "handle": "DNA-1"}}); got != "DNA-1 (all roles)" {
+		t.Errorf("confirmValue(handles) = %q", got)
+	}
+	if got := confirmValue([]any{"ns1.example.net", "ns2.example.net"}); got != "ns1.example.net, ns2.example.net" {
+		t.Errorf("confirmValue(list) = %q", got)
+	}
+}
+
 func TestShellRunsCommands(t *testing.T) {
 	api := newFakeAPI(t)
 	api.json("GET /api/v1/deposit/accounts/me", `{"resellerName":"Acme","resellerGroupName":"Gold","usdBalance":5,"tryBalance":7}`)
@@ -381,5 +426,15 @@ func TestShellRunsCommands(t *testing.T) {
 	}
 	if _, err := splitWords(`say "unterminated`); err == nil {
 		t.Error("unterminated quote accepted")
+	}
+}
+
+func TestMenuLabelsFitNarrow(t *testing.T) {
+	s := newShell(&App{Getenv: func(string) string { return "" }})
+	m := &menu{items: []menuItem{{label: "Short", desc: "first description"}, {label: "A very long label that would push everything", desc: "second description"}}}
+	for _, l := range m.view(s, 50) {
+		if strings.Contains(l, "Short") && !strings.Contains(l, "first descr") {
+			t.Errorf("a long label pushed the description off: %q", l)
+		}
 	}
 }

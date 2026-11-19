@@ -93,11 +93,14 @@ dna --ote account get
 dna --ote domain search example.com
 dna --ote product tlds --filter-text com
 
-# 3. Visualizza l'anteprima di un acquisto, poi effettualo (chiede conferma)
-dna --ote domain register example.com --ns tr.apiname.com,eu.apiname.com --handle <HANDLE> --dry-run
-dna --ote domain register example.com --ns tr.apiname.com,eu.apiname.com --handle <HANDLE>
+# 3. Crea un contatto una sola volta: dna chiede i dati e lo imposta come contatto predefinito
+dna --ote contact create
 
-# 4. Produzione
+# 4. Visualizza l'anteprima di un acquisto, poi effettualo (chiede conferma)
+dna --ote domain register example.com --dry-run
+dna --ote domain register example.com
+
+# 5. Produzione
 dna auth login
 dna domain list
 ```

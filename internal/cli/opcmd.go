@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -260,6 +259,9 @@ func (a *App) newOpCommand(op *ops.Operation) *cobra.Command {
 		if err != nil {
 			return err
 		}
+		if err := a.prepareInput(cmd.Context(), op, in); err != nil {
+			return err
+		}
 		all, _ := fs.GetBool("all")
 		return a.runOperation(cmd.Context(), op, in, all)
 	}
@@ -490,7 +492,11 @@ func (a *App) runOperation(ctx context.Context, op *ops.Operation, in ops.Input,
 	if resp != nil && resp.Quota != nil && resp.Quota.Delay >= 1 && !a.machineOutput() {
 		a.warn(fmt.Sprintf("the API slowed this request down by %.1fs (quota %s %.0f/%.0f); it recovers within %.0fs", resp.Quota.Delay, resp.Quota.Scope, resp.Quota.Used, resp.Quota.Limit, resp.Quota.Reset))
 	}
-	return a.render(raw, opts)
+	if err := a.render(raw, opts); err != nil {
+		return err
+	}
+	a.afterOperation(op, in, raw)
+	return nil
 }
 
 // subjectOf is the main argument of an operation (usually the domain name),
@@ -690,7 +696,7 @@ func (a *App) confirm(op *ops.Operation, req *dna.Request, res *config.Resolved)
 	lines = append(lines, "", p.Muted("Preview without sending: --dry-run · skip this question: --yes"))
 	fmt.Fprint(a.Err, p.Block(tone, "▲", head, lines))
 	fmt.Fprint(a.Err, "\n "+p.BoldFg(ui.Accent, "?")+" "+p.Bold("Continue?")+" "+p.Muted("[y/N]")+" ")
-	line, _ := bufio.NewReader(a.In).ReadString('\n')
+	line, _ := a.stdin().ReadString('\n')
 	if ok, valid := ops.ParseBool(strings.TrimSpace(line)); !valid || !ok {
 		return &ConfirmationError{Operation: op.ID, Safety: op.Safety, Declined: true}
 	}

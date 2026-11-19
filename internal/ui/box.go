@@ -1,11 +1,57 @@
 package ui
 
-import "strings"
+import (
+	"strings"
+	"unicode/utf8"
+)
+
+// TruncateStyled shortens s, which may contain escape sequences, to w cells,
+// ending with "…". The escape sequences are kept, so colors stay intact.
+func TruncateStyled(s string, w int) string {
+	if Width(s) <= w {
+		return s
+	}
+	if w <= 0 {
+		return ""
+	}
+	var sb strings.Builder
+	n := 0
+	for i := 0; i < len(s); {
+		if s[i] == 0x1b {
+			j := i + 1
+			if j < len(s) && s[j] == '[' {
+				j++
+				for j < len(s) && (s[j] < 0x40 || s[j] > 0x7e) {
+					j++
+				}
+				j++
+			}
+			if j > len(s) {
+				j = len(s)
+			}
+			sb.WriteString(s[i:j])
+			i = j
+			continue
+		}
+		r, size := utf8.DecodeRuneInString(s[i:])
+		if rw := RuneWidth(r); n+rw > w-1 {
+			break
+		} else {
+			n += rw
+		}
+		sb.WriteRune(r)
+		i += size
+	}
+	sb.WriteString("…")
+	if strings.IndexByte(s, 0x1b) >= 0 {
+		sb.WriteString("\x1b[0m")
+	}
+	return sb.String()
+}
 
 // Box draws lines inside a rounded border. width is the outer width; 0 fits
 // the content. title (which may be styled) is set into the top border.
-// Lines wider than the box are truncated (plain lines) or left as they are
-// (styled lines; callers keep those short).
+// Lines wider than the box are truncated, so a narrow terminal never wraps.
 func (p Painter) Box(lines []string, width int, border Color, title string) []string {
 	inner := 0
 	for _, l := range lines {
@@ -34,8 +80,8 @@ func (p Painter) Box(lines []string, width int, border Color, title string) []st
 		out = append(out, b("╭"+strings.Repeat("─", inner+2)+"╮"))
 	}
 	for _, l := range lines {
-		if Width(l) > inner && !strings.Contains(l, "\x1b") {
-			l = Truncate(l, inner)
+		if Width(l) > inner {
+			l = TruncateStyled(l, inner)
 		}
 		out = append(out, b("│")+" "+PadRight(l, inner)+" "+b("│"))
 	}

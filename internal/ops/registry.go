@@ -89,9 +89,9 @@ var contactFields = map[string]Field{
 	"contact.city":             {Required: true, Help: "City"},
 	"contact.state":            {Required: true, Help: "State or province"},
 	"contact.postalCode":       {Required: true, Help: "Postal code"},
-	"contact.country":          {Required: true, Help: "2-letter ISO country code, e.g. TR, US"},
-	"contact.phoneCountryCode": {Required: true, Help: "Country calling code, digits only without +, e.g. 90"},
-	"contact.phone":            {Required: true, Help: "Phone number, digits only"},
+	"contact.country":          {Required: true, Help: "2-letter ISO country code, e.g. TR, US (on the command line: taken from a +code phone when only one country uses it)"},
+	"contact.phoneCountryCode": {Required: true, Help: "Country calling code, digits only without +, e.g. 90 (on the command line: not needed when --phone starts with +)"},
+	"contact.phone":            {Required: true, Help: "Phone number, digits only (on the command line also +90 555 123 45 67, split for you)"},
 	"contact.discloseFlag":     {Help: "Publish the contact in WHOIS (unset keeps the registry default)"},
 }
 
@@ -134,10 +134,16 @@ var registry = []*Operation{
 		ID: "contact.create", Method: "POST", Path: "/api/v1/contacts", Safety: Write,
 		Summary: "Create a reusable contact handle",
 		Description: "Creates a contact and returns its handle, which `dna domain register --handle` accepts. " +
-			"country is a 2-letter ISO code; phone and phoneCountryCode are digits only (e.g. 90 and 5551234567).",
-		Flatten:  map[string]string{"contact": ""},
-		Fields:   contactFields,
-		Examples: []Example{{`dna contact create --first-name Ada --last-name Lovelace --email ada@example.com --address "1 Example St" --city Istanbul --state Istanbul --country TR --postal-code 34000 --phone-country-code 90 --phone 5551234567`, ""}},
+			"country is a 2-letter ISO code; phone and phoneCountryCode are digits only (e.g. 90 and 5551234567).\n\n" +
+			"On the command line dna saves the new handle on this computer (`dna contact list`) and, when there is no default contact yet, " +
+			"makes it the default that `dna domain register` uses without --handle. At a terminal it asks for the details you leave out, " +
+			"and --phone takes the full number (+90 555 123 45 67).",
+		Flatten: map[string]string{"contact": ""},
+		Fields:  contactFields,
+		Examples: []Example{
+			{"dna contact create", "At a terminal: dna asks for each detail"},
+			{`dna contact create --first-name Ada --last-name Lovelace --email ada@example.com --phone "+90 555 123 45 67" --address "1 Example St" --city Istanbul --state Istanbul --postal-code 34000`, "Country TR and code 90 come from the phone"},
+		},
 	},
 	{
 		ID: "contact.update", Method: "PUT", Path: "/api/v1/contacts/{handleCode}", Safety: Write, Args: []string{"handleCode"},
@@ -199,15 +205,19 @@ var registry = []*Operation{
 		ID: "domain.register", Method: "POST", Path: "/api/v1/domains/register", Safety: Billable, Args: domainArg,
 		Summary: "Register a domain using existing contact handles (charges balance)",
 		Description: "Registers the domain for --period years with the given nameservers and contact handles. " +
-			"Check availability and price first with `dna domain search`. Some TLDs need --tld-attributes (see `dna product tlds --filter-text <tld>`).",
+			"Check availability and price first with `dna domain search`. Some TLDs need --tld-attributes (see `dna product tlds --filter-text <tld>`).\n\n" +
+			"On the command line --handle and --ns may be left out: dna then uses your default contact (`dna contact default`) for all four roles " +
+			"and the platform nameservers (tr.apiname.com, eu.apiname.com). At a terminal without a default contact, dna lets you pick one, " +
+			"find the ones on your domains or create one on the spot.",
 		Fields: map[string]Field{
 			"period":        {Help: "Registration period in years (1-10)"},
-			"nameServers":   {Flag: "ns", Split: true, Help: "Nameserver host names (repeat or comma separate; at least 2 usually required)"},
+			"nameServers":   {Flag: "ns", Split: true, Help: "Nameserver host names (repeat or comma separate; at least 2 usually required; command line default: the platform nameservers)"},
 			"handles":       {Help: `Contact handles as JSON: [{"contactType":"Registrant","handle":"DNA-1"},...]`},
 			"tldAttributes": {Flag: "tld-attribute", Help: "Registry-specific attribute"},
 		},
 		Converters: []Converter{handleConverter("handles")},
 		Examples: []Example{
+			{"dna domain register example.com --period 2 --dry-run", "Your default contact and the platform nameservers"},
 			{"dna domain register example.com --period 1 --ns ns1.example.net --ns ns2.example.net --handle DNA-12345 --yes", "Same handle for all four roles"},
 			{"dna domain register example.com --ns ns1.example.net,ns2.example.net --handle Registrant=DNA-1 --handle Admin=DNA-2 --handle Tech=DNA-2 --handle Billing=DNA-2 --dry-run", "Preview the request"},
 		},
