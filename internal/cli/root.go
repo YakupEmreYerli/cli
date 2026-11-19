@@ -36,6 +36,16 @@ func (a *App) newRootCmd() *cobra.Command {
 	}
 	root.SetVersionTemplate("dna {{.Version}}\n")
 	root.SetFlagErrorFunc(func(_ *cobra.Command, err error) error { return usageErr(err) })
+	root.Args = cobra.NoArgs
+	root.RunE = func(cmd *cobra.Command, _ []string) error {
+		// A person at a terminal gets the interactive shell; scripts and
+		// agents (and the shell itself) get the plain help text.
+		if a.canRunShell() {
+			return a.runShell(cmd.Context())
+		}
+		return cmd.Help()
+	}
+	a.setupHelp(root)
 	addGlobalFlags(root, &a.flags)
 
 	root.AddGroup(&cobra.Group{ID: "api", Title: "API commands:"}, &cobra.Group{ID: "cli", Title: "CLI and AI commands:"})

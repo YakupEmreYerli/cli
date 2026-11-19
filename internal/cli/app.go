@@ -18,6 +18,7 @@ import (
 	"github.com/domainreseller/cli/internal/config"
 	"github.com/domainreseller/cli/internal/dna"
 	"github.com/domainreseller/cli/internal/output"
+	"github.com/domainreseller/cli/internal/ui"
 )
 
 // BuildInfo identifies the binary.
@@ -39,6 +40,14 @@ type App struct {
 
 	// Terminal detection; overridable in tests.
 	StdinTTY, StdoutTTY, StderrTTY bool
+	// NoVT is set when the console cannot show ANSI escape sequences
+	// (Windows versions before 10); colors and the spinner stay off then.
+	NoVT bool
+	// Width is the terminal width; 0 detects it from stdout.
+	Width int
+
+	// inShell marks an App the interactive shell runs one command with.
+	inShell bool
 
 	// HTTPClient, when set, is used for API calls (tests).
 	HTTPClient *http.Client
@@ -68,7 +77,7 @@ type globalFlags struct {
 
 // NewApp returns an App wired to the real process.
 func NewApp(build BuildInfo) *App {
-	return &App{
+	a := &App{
 		In:        os.Stdin,
 		Out:       os.Stdout,
 		Err:       os.Stderr,
@@ -78,6 +87,10 @@ func NewApp(build BuildInfo) *App {
 		StdoutTTY: term.IsTerminal(int(os.Stdout.Fd())),
 		StderrTTY: term.IsTerminal(int(os.Stderr.Fd())),
 	}
+	if (a.StdoutTTY && !ui.EnableVT(os.Stdout)) || (a.StderrTTY && !ui.EnableVT(os.Stderr)) {
+		a.NoVT = true
+	}
+	return a
 }
 
 // Run executes the CLI with args and returns the process exit code.
@@ -94,8 +107,72 @@ func (a *App) Run(ctx context.Context, args []string) int {
 	return a.reportError(err)
 }
 
-// interactive reports whether we may prompt the user.
-func (a *App) interactive() bool { return a.StdinTTY && a.StderrTTY }
+// interactive reports whether we may prompt the user. Never under an AI
+// agent: a prompt would block it, so it gets exit code 9 instead.
+func (a *App) interactive() bool { return a.StdinTTY && a.StderrTTY && !a.agentMode() }
+
+// agentEnvVars are set by AI coding agents in the shells they run commands
+// in. AI_AGENT is the generic convention; the others are tool specific.
+var agentEnvVars = []string{"AI_AGENT", "CLAUDECODE", "GEMINI_CLI", "CODEX_SANDBOX", "CURSOR_AGENT"}
+
+// agentMode reports whether an AI agent runs this command. Agents sometimes
+// run commands in a pseudo-terminal, which looks like a person at a
+// terminal; in agent mode dna still behaves as on a pipe: JSON output, no
+// prompts, no spinner. DNA_AGENT=1 forces it on, DNA_AGENT=0 off.
+func (a *App) agentMode() bool {
+	switch strings.ToLower(strings.TrimSpace(a.Getenv(config.EnvAgent))) {
+	case "1", "true", "yes", "on":
+		return true
+	case "0", "false", "no", "off":
+		return false
+	}
+	for _, k := range agentEnvVars {
+		if a.Getenv(k) != "" {
+			return true
+		}
+	}
+	return false
+}
+
+// human reports whether a person is watching the terminal (stdout).
+func (a *App) human() bool { return a.StdoutTTY && !a.agentMode() }
+
+// painter returns the color painter for a stream.
+func (a *App) painter(tty bool) ui.Painter {
+	if a.flags.noColor || a.NoVT {
+		return ui.Painter{}
+	}
+	return ui.Painter{Level: ui.DetectLevel(tty, a.Getenv)}
+}
+
+// outP and errP paint stdout and stderr.
+func (a *App) outP() ui.Painter { return a.painter(a.StdoutTTY) }
+func (a *App) errP() ui.Painter { return a.painter(a.StderrTTY) }
+
+// width is the terminal width for tables (0 when stdout is not a terminal).
+func (a *App) width() int {
+	if a.Width > 0 {
+		return a.Width
+	}
+	if f, ok := a.Out.(*os.File); ok && a.StdoutTTY {
+		if w, _, err := term.GetSize(int(f.Fd())); err == nil && w > 0 {
+			return w
+		}
+	}
+	return 0
+}
+
+// spin shows a spinner on stderr while a request runs, when a person is
+// watching. It returns functions that relabel and stop (erase) it.
+func (a *App) spin(label string) (update func(string), stop func()) {
+	if !a.StderrTTY || a.inShell || a.agentMode() || a.flags.verbose || a.NoVT || a.Getenv("TERM") == "dumb" {
+		return func(string) {}, func() {}
+	}
+	s := ui.NewSpinner(a.Err, a.errP())
+	s.MaxWidth = a.width()
+	s.Start(label)
+	return s.Update, s.Stop
+}
 
 // format resolves --output (auto -> table on a terminal, json otherwise).
 func (a *App) format() (output.Format, error) {
@@ -108,7 +185,7 @@ func (a *App) format() (output.Format, error) {
 		return "", usageErr(err)
 	}
 	if f == output.Auto {
-		if a.StdoutTTY {
+		if a.human() {
 			return output.Table, nil
 		}
 		return output.JSON, nil
@@ -225,14 +302,7 @@ func (a *App) warn(msg string) {
 		fmt.Fprintln(a.Err, string(b))
 		return
 	}
-	fmt.Fprintln(a.Err, a.color("33", "warning: ")+msg)
-}
-
-func (a *App) color(code, s string) string {
-	if a.flags.noColor || a.Getenv(config.EnvNoColor) != "" || !a.StderrTTY {
-		return s
-	}
-	return "\x1b[" + code + "m" + s + "\x1b[0m"
+	fmt.Fprintln(a.Err, a.errP().BoldFg(ui.Amber, "▲ warning")+" "+msg)
 }
 
 // render prints an API response body using the global output flags.
@@ -244,6 +314,14 @@ func (a *App) render(data []byte, opts output.Options) error {
 	opts.Format = f
 	opts.JQ = a.flags.jq
 	opts.Pretty = a.StdoutTTY
+	switch {
+	case f == output.Table:
+		opts.Painter, opts.Width = a.outP(), a.width()
+	case a.human():
+		// JSON on a terminal gets syntax colors; on a pipe (scripts,
+		// agents) it never does, whatever FORCE_COLOR says.
+		opts.Painter = a.outP()
+	}
 	return output.Render(a.Out, data, opts)
 }
 
@@ -255,7 +333,11 @@ func (a *App) printJSON(v any) error {
 		return err
 	}
 	if a.flags.jq == "" && f != output.JSONL {
-		return output.WriteJSON(a.Out, v, a.StdoutTTY)
+		p := ui.Painter{}
+		if a.human() {
+			p = a.outP()
+		}
+		return output.WriteJSONColor(a.Out, v, a.StdoutTTY, p)
 	}
 	b, err := json.Marshal(v)
 	if err != nil {
@@ -264,7 +346,11 @@ func (a *App) printJSON(v any) error {
 	if f == output.Table || f == output.Raw {
 		f = output.JSON // structured CLI data has no table form
 	}
-	return output.Render(a.Out, b, output.Options{Format: f, JQ: a.flags.jq, Pretty: a.StdoutTTY})
+	opts := output.Options{Format: f, JQ: a.flags.jq, Pretty: a.StdoutTTY}
+	if a.human() {
+		opts.Painter = a.outP()
+	}
+	return output.Render(a.Out, b, opts)
 }
 
 func addGlobalFlags(cmd *cobra.Command, f *globalFlags) {

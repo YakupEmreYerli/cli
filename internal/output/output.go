@@ -1,5 +1,7 @@
 // Package output renders API responses as JSON, JSON lines, tables or raw
-// bytes, and applies --jq filters.
+// bytes, and applies --jq filters. The table format is the human view
+// (see human.go); every other format is for machines and never styled
+// unless a Painter is given for a terminal.
 package output
 
 import (
@@ -10,14 +12,13 @@ import (
 	"math"
 	"regexp"
 	"sort"
-	"strconv"
 	"strings"
-	"text/tabwriter"
-	"unicode/utf8"
+	"time"
 
 	"github.com/itchyny/gojq"
 
 	"github.com/domainreseller/cli/internal/dna"
+	"github.com/domainreseller/cli/internal/ui"
 )
 
 // Format is an output format.
@@ -56,6 +57,13 @@ type Options struct {
 	Enums   map[string]*dna.EnumInfo // field -> enum, for table cells
 	// RowHook adds derived columns to each list row in table output.
 	RowHook func(row map[string]any)
+
+	// Human view only (table format, or JSON on a terminal):
+	Painter ui.Painter // colors; the zero value prints plain text
+	Width   int        // terminal width for tables (0 = unlimited)
+	View    string     // operation ID, selects a tailored view
+	Subject string     // the main argument (usually the domain), for hints
+	Now     time.Time  // reference time for "in 12 days" (zero = now)
 }
 
 // EmptySuccess is printed for successful calls that return no body.
@@ -65,7 +73,7 @@ var EmptySuccess = []byte(`{"success":true}`)
 func Render(w io.Writer, data []byte, opts Options) error {
 	if len(bytes.TrimSpace(data)) == 0 {
 		if opts.Format == Table && opts.JQ == "" {
-			_, err := fmt.Fprintln(w, "OK")
+			_, err := fmt.Fprint(w, "\n  "+opts.Painter.BoldFg(ui.Green, "✓")+" Done\n\n")
 			return err
 		}
 		data = EmptySuccess
@@ -90,13 +98,23 @@ func Render(w io.Writer, data []byte, opts Options) error {
 	case JSONL:
 		return writeJSONL(w, v)
 	case Table:
-		return writeTable(w, v, opts)
+		return writeHuman(w, v, opts)
 	}
-	return WriteJSON(w, v, opts.Pretty)
+	return writeJSON(w, v, opts.Pretty, opts.Painter)
 }
 
 // WriteJSON writes v as JSON followed by a newline.
 func WriteJSON(w io.Writer, v any, pretty bool) error {
+	return writeJSON(w, v, pretty, ui.Painter{})
+}
+
+// WriteJSONColor is WriteJSON with syntax colors for a terminal (the text is
+// identical; a zero Painter adds nothing).
+func WriteJSONColor(w io.Writer, v any, pretty bool, p ui.Painter) error {
+	return writeJSON(w, v, pretty, p)
+}
+
+func writeJSON(w io.Writer, v any, pretty bool, p ui.Painter) error {
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
 	enc.SetEscapeHTML(false)
@@ -106,7 +124,7 @@ func WriteJSON(w io.Writer, v any, pretty bool) error {
 	if err := enc.Encode(v); err != nil {
 		return err
 	}
-	_, err := w.Write(buf.Bytes())
+	_, err := w.Write(p.ColorizeJSON(buf.Bytes()))
 	return err
 }
 
@@ -137,7 +155,7 @@ func runJQ(w io.Writer, v any, opts Options) error {
 			}
 			continue
 		}
-		if err := WriteJSON(w, x, opts.Pretty); err != nil {
+		if err := writeJSON(w, x, opts.Pretty, opts.Painter); err != nil {
 			return err
 		}
 	}
@@ -199,66 +217,6 @@ func writeJSONL(w io.Writer, v any) error {
 		return nil
 	}
 	return WriteJSON(w, v, false)
-}
-
-func writeTable(w io.Writer, v any, opts Options) error {
-	if list, ok := ListItems(v); ok {
-		if opts.RowHook != nil {
-			for _, r := range list {
-				if m, isObj := r.(map[string]any); isObj {
-					opts.RowHook(m)
-				}
-			}
-		}
-		if err := writeRows(w, list, opts); err != nil {
-			return err
-		}
-		if m, isObj := v.(map[string]any); isObj {
-			if total, ok := m["totalCount"].(float64); ok && int(total) > len(list) {
-				fmt.Fprintf(w, "\nShowing %d of %d. Use --all to fetch every page, or --skip-count/--max-result-count.\n", len(list), int(total))
-			}
-			for _, k := range []string{"operationMessage", "reason"} {
-				if s, ok := m[k].(string); ok && s != "" {
-					fmt.Fprintf(w, "%s: %s\n", k, s)
-				}
-			}
-		}
-		return nil
-	}
-	if m, ok := v.(map[string]any); ok {
-		return writeObject(w, m, opts, "")
-	}
-	_, err := fmt.Fprintln(w, cell(v, nil))
-	return err
-}
-
-func writeRows(w io.Writer, rows []any, opts Options) error {
-	if len(rows) == 0 {
-		_, err := fmt.Fprintln(w, "No results.")
-		return err
-	}
-	if _, isObj := rows[0].(map[string]any); !isObj {
-		for _, r := range rows {
-			fmt.Fprintln(w, cell(r, nil))
-		}
-		return nil
-	}
-	cols := columns(rows, opts.Columns)
-	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
-	header := make([]string, len(cols))
-	for i, c := range cols {
-		header[i] = strings.ToUpper(humanize(c))
-	}
-	fmt.Fprintln(tw, strings.Join(header, "\t"))
-	for _, r := range rows {
-		m, _ := r.(map[string]any)
-		vals := make([]string, len(cols))
-		for i, c := range cols {
-			vals[i] = truncate(cell(m[c], opts.Enums[c]), 60)
-		}
-		fmt.Fprintln(tw, strings.Join(vals, "\t"))
-	}
-	return tw.Flush()
 }
 
 func columns(rows []any, preferred []string) []string {
@@ -340,109 +298,7 @@ func columnHasValue(rows []any, k string) bool {
 	return false
 }
 
-func writeObject(w io.Writer, m map[string]any, opts Options, indent string) error {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
-	var nested []string
-	for _, k := range keys {
-		switch x := m[k].(type) {
-		case map[string]any:
-			if len(x) > 0 {
-				nested = append(nested, k)
-				continue
-			}
-		case []any:
-			if len(x) > 0 {
-				if _, isObj := x[0].(map[string]any); isObj {
-					nested = append(nested, k)
-					continue
-				}
-			}
-		}
-		fmt.Fprintf(tw, "%s%s:\t%s\n", indent, humanize(k), cell(m[k], opts.Enums[k]))
-	}
-	if err := tw.Flush(); err != nil {
-		return err
-	}
-	for _, k := range nested {
-		fmt.Fprintf(w, "\n%s%s:\n", indent, humanize(k))
-		switch x := m[k].(type) {
-		case map[string]any:
-			if err := writeObject(w, x, Options{}, indent+"  "); err != nil {
-				return err
-			}
-		case []any:
-			var buf bytes.Buffer
-			if err := writeRows(&buf, x, Options{}); err != nil {
-				return err
-			}
-			for _, line := range strings.Split(strings.TrimRight(buf.String(), "\n"), "\n") {
-				fmt.Fprintf(w, "%s  %s\n", indent, line)
-			}
-		}
-	}
-	return nil
-}
-
 var dateTime = regexp.MustCompile(`^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?$`)
-
-func cell(v any, enum *dna.EnumInfo) string {
-	switch x := v.(type) {
-	case nil:
-		return "-"
-	case string:
-		if x == "" {
-			return "-"
-		}
-		if m := dateTime.FindStringSubmatch(x); m != nil {
-			if strings.HasPrefix(m[1], "0001-01-01") {
-				return "-"
-			}
-			if m[2] == "00:00" {
-				return m[1]
-			}
-			return m[1] + " " + m[2]
-		}
-		return strings.ReplaceAll(x, "\n", " ")
-	case float64:
-		s := strconv.FormatFloat(x, 'f', -1, 64)
-		if enum != nil && x == math.Trunc(x) {
-			if name := enum.NameOf(int(x)); name != "" {
-				return name
-			}
-		}
-		return s
-	case bool:
-		if x {
-			return "yes"
-		}
-		return "no"
-	case []any:
-		parts := make([]string, 0, len(x))
-		for _, item := range x {
-			if m, ok := item.(map[string]any); ok {
-				parts = append(parts, summarize(m))
-				continue
-			}
-			parts = append(parts, cell(item, enum))
-		}
-		if len(parts) == 0 {
-			return "-"
-		}
-		return strings.Join(parts, ", ")
-	case map[string]any:
-		if len(x) == 0 {
-			return "-"
-		}
-		b, _ := json.Marshal(x)
-		return string(b)
-	}
-	return fmt.Sprint(v)
-}
 
 // summarize picks the most telling value of an object for a table cell.
 func summarize(m map[string]any) string {
@@ -453,14 +309,6 @@ func summarize(m map[string]any) string {
 	}
 	b, _ := json.Marshal(m)
 	return string(b)
-}
-
-func truncate(s string, n int) string {
-	if utf8.RuneCountInString(s) <= n {
-		return s
-	}
-	r := []rune(s)
-	return string(r[:n-1]) + "…"
 }
 
 // humanize turns camelCase keys into words: expirationDate -> expiration date.

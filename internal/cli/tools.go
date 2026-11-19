@@ -17,6 +17,7 @@ import (
 	"github.com/domainreseller/cli/internal/openapi"
 	"github.com/domainreseller/cli/internal/ops"
 	"github.com/domainreseller/cli/internal/output"
+	"github.com/domainreseller/cli/internal/ui"
 )
 
 // ---------------------------------------------------------------- api
@@ -217,20 +218,21 @@ func (a *App) newEnumsCmd() *cobra.Command {
 				}
 				return a.printJSON(list)
 			}
+			p := a.outP()
 			for i, e := range list {
 				if i > 0 {
 					fmt.Fprintln(a.Out)
 				}
-				fmt.Fprintf(a.Out, "%s (%s) - %s\n", e.Name, e.Kind, e.Description)
+				fmt.Fprintf(a.Out, "%s %s %s\n", p.BoldFg(ui.Accent, e.Name), p.Muted("("+e.Kind+")"), p.Muted("· "+e.Description))
 				for _, v := range e.Values {
 					desc := ""
 					if v.Description != "" {
-						desc = "  " + v.Description
+						desc = "  " + p.Muted(v.Description)
 					}
 					if e.Kind == "string" {
-						fmt.Fprintf(a.Out, "  %-28s%s\n", v.Name, desc)
+						fmt.Fprintf(a.Out, "  %s%s\n", ui.PadRight(v.Name, 28), desc)
 					} else {
-						fmt.Fprintf(a.Out, "  %4v  %-28s%s\n", v.Value, v.Name, desc)
+						fmt.Fprintf(a.Out, "  %s  %s%s\n", p.Fg(ui.Amber, fmt.Sprintf("%4v", v.Value)), ui.PadRight(v.Name, 28), desc)
 					}
 				}
 			}
@@ -328,29 +330,35 @@ func profilesOf(cfg interface{ ProfileNames() []string }) []string {
 func (a *App) finishDoctor(checks any, firstErr error) error {
 	if a.machineOutput() {
 		_ = a.printJSON(map[string]any{"ok": firstErr == nil, "checks": checks})
-	} else {
-		b, _ := json.Marshal(checks)
-		var list []map[string]any
-		_ = json.Unmarshal(b, &list)
-		for _, c := range list {
-			mark := a.colorOut("32", "✓")
-			if ok, _ := c["ok"].(bool); !ok {
-				mark = a.colorOut("31", "✗")
-			}
-			fmt.Fprintf(a.Out, "%s %-15s %v\n", mark, c["name"], c["detail"])
-			if h, _ := c["hint"].(string); h != "" {
-				fmt.Fprintf(a.Out, "  %s\n", h)
-			}
+		return firstErr
+	}
+	b, _ := json.Marshal(checks)
+	var list []map[string]any
+	_ = json.Unmarshal(b, &list)
+	p := a.outP()
+	var sb strings.Builder
+	sb.WriteString("\n")
+	passed, failed := 0, 0
+	for _, c := range list {
+		mark := p.BoldFg(ui.Green, "✓")
+		if ok, _ := c["ok"].(bool); !ok {
+			mark = p.BoldFg(ui.Red, "✗")
+			failed++
+		} else {
+			passed++
+		}
+		sb.WriteString(fmt.Sprintf("  %s %s %v\n", mark, p.Bold(ui.PadRight(fmt.Sprint(c["name"]), 15)), c["detail"]))
+		if h, _ := c["hint"].(string); h != "" {
+			sb.WriteString("    " + strings.Repeat(" ", 15) + p.Hint(styleCode(p, h)) + "\n")
 		}
 	}
-	return firstErr
-}
-
-func (a *App) colorOut(code, s string) string {
-	if a.flags.noColor || a.Getenv("NO_COLOR") != "" || !a.StdoutTTY {
-		return s
+	summary := p.Fg(ui.Green, fmt.Sprintf("%d passed", passed))
+	if failed > 0 {
+		summary += p.Muted(" · ") + p.Fg(ui.Red, fmt.Sprintf("%d failed", failed))
 	}
-	return "\x1b[" + code + "m" + s + "\x1b[0m"
+	sb.WriteString("\n  " + summary + "\n\n")
+	fmt.Fprint(a.Out, sb.String())
+	return firstErr
 }
 
 // ---------------------------------------------------------------- version
@@ -369,7 +377,9 @@ func (a *App) newVersionCmd() *cobra.Command {
 			if a.machineOutput() {
 				return a.printJSON(info)
 			}
-			fmt.Fprintf(a.Out, "dna %s (commit %s, built %s)\n%s %s/%s\n", a.Build.Version, orDash(a.Build.Commit), orDash(a.Build.Date), runtime.Version(), runtime.GOOS, runtime.GOARCH)
+			p := a.outP()
+			fmt.Fprintf(a.Out, "%s %s %s\n", p.BoldFg(ui.Accent, "dna"), p.Bold(a.Build.Version), p.Muted(fmt.Sprintf("(commit %s, built %s)", orDash(a.Build.Commit), orDash(a.Build.Date))))
+			fmt.Fprintln(a.Out, p.Muted(fmt.Sprintf("%s %s/%s · API %s", runtime.Version(), runtime.GOOS, runtime.GOARCH, info["apiSpec"])))
 			return nil
 		},
 	}

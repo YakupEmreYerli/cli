@@ -137,5 +137,7 @@ Read-only mode refuses every operation whose safety class is not `read` (exit co
 | `DNA_CONFIG` | config file path |
 | `DNA_OUTPUT` | default output format (`json`, `table`, …) |
 | `DNA_READ_ONLY` | `1` blocks every change |
-| `NO_COLOR` | disable colours |
+| `NO_COLOR` | disable colours (the terminal layout stays) |
+| `FORCE_COLOR`, `CLICOLOR_FORCE` | keep colours for `-o table` when stdout is not a terminal (never applied to JSON) |
+| `DNA_AGENT` | `1` forces agent mode (JSON, no prompts, no spinner), `0` turns agent detection off ([usage](usage.md#ai-agents-and-the-terminal-ui)) |
 | `HTTPS_PROXY`, `NO_PROXY` | standard proxy settings |

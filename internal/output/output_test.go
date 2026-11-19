@@ -21,7 +21,7 @@ func TestFormats(t *testing.T) {
 	data := `{"totalCount":5,"items":[{"domainName":"a.com","status":0,"expirationDate":"2027-01-02T00:00:00","lockStatus":true},{"domainName":"b.com","status":7,"expirationDate":"2027-03-04T10:20:30Z","lockStatus":false}]}`
 	enum, _ := dna.LookupEnum("DomainStatus")
 	table := render(t, data, Options{Format: Table, Columns: []string{"domainName", "status", "expirationDate", "lockStatus"}, Enums: map[string]*dna.EnumInfo{"status": enum}})
-	for _, want := range []string{"DOMAIN NAME", "Active", "PendingDelete", "2027-01-02", "2027-03-04 10:20", "yes", "Showing 2 of 5"} {
+	for _, want := range []string{"DOMAIN NAME", "Active", "PendingDelete", "2027-01-02", "2027-03-04", "✓ on", "Showing 2 of 5"} {
 		if !strings.Contains(table, want) {
 			t.Errorf("table missing %q:\n%s", want, table)
 		}
@@ -50,7 +50,7 @@ func TestFormats(t *testing.T) {
 
 func TestObjectView(t *testing.T) {
 	out := render(t, `{"domainName":"a.com","nameservers":["ns1","ns2"],"contacts":[{"firstName":"Ada","contactType":"Registrant"}],"info":{"price":9.5}}`, Options{Format: Table})
-	for _, want := range []string{"domain name:", "ns1, ns2", "contacts:", "Ada", "info:", "price:"} {
+	for _, want := range []string{"a.com", "Nameservers  ns1, ns2", "Contacts", "CONTACT TYPE", "Ada", "Info", "price  9.50"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("object view missing %q:\n%s", want, out)
 		}

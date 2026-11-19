@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/domainreseller/cli/internal/dna"
 	"github.com/domainreseller/cli/internal/ops"
 	"github.com/domainreseller/cli/internal/output"
+	"github.com/domainreseller/cli/internal/ui"
 )
 
 // subgroupHelp describes intermediate command groups such as `domain host`.
@@ -465,27 +467,53 @@ func (a *App) runOperation(ctx context.Context, op *ops.Operation, in ops.Input,
 			return err
 		}
 	}
+	subject := subjectOf(op, in)
+	opts := output.Options{Columns: op.Columns, Enums: op.ResultEnums(), RowHook: op.TableRow, View: op.ID, Subject: subject}
+	label := strings.TrimSpace(strings.Join(op.CommandPath(), " ") + " " + subject)
+	update, stop := a.spin(label)
 	if all && op.Paged() {
-		data, err := a.fetchAll(ctx, client, req)
+		data, err := a.fetchAll(ctx, client, req, func(n int, total int64) {
+			update(fmt.Sprintf("%s · %d of %d", label, n, total))
+		})
+		stop()
 		if err != nil {
 			return err
 		}
-		return a.render(data, output.Options{Columns: op.Columns, Enums: op.ResultEnums(), RowHook: op.TableRow})
+		return a.render(data, opts)
 	}
 	var raw json.RawMessage
 	resp, err := client.Do(ctx, req, &raw)
+	stop()
 	if err != nil {
 		return err
 	}
 	if resp != nil && resp.Quota != nil && resp.Quota.Delay >= 1 && !a.machineOutput() {
 		a.warn(fmt.Sprintf("the API slowed this request down by %.1fs (quota %s %.0f/%.0f); it recovers within %.0fs", resp.Quota.Delay, resp.Quota.Scope, resp.Quota.Used, resp.Quota.Limit, resp.Quota.Reset))
 	}
-	return a.render(raw, output.Options{Columns: op.Columns, Enums: op.ResultEnums(), RowHook: op.TableRow})
+	return a.render(raw, opts)
+}
+
+// subjectOf is the main argument of an operation (usually the domain name),
+// used in the spinner label and in suggested next steps.
+func subjectOf(op *ops.Operation, in ops.Input) string {
+	if len(op.Args) == 0 {
+		return ""
+	}
+	switch v := in[strings.TrimSuffix(op.Args[0], "...")].(type) {
+	case string:
+		return v
+	case []string:
+		if len(v) > 3 {
+			return strings.Join(v[:3], ", ") + fmt.Sprintf(" +%d", len(v)-3)
+		}
+		return strings.Join(v, ", ")
+	}
+	return ""
 }
 
 const pageSize = 100
 
-func (a *App) fetchAll(ctx context.Context, client *dna.Client, req *dna.Request) ([]byte, error) {
+func (a *App) fetchAll(ctx context.Context, client *dna.Client, req *dna.Request, progress func(n int, total int64)) ([]byte, error) {
 	size := pageSize
 	if s := req.Query.Get("MaxResultCount"); s != "" {
 		if n, err := strconv.Atoi(s); err == nil && n > 0 {
@@ -515,6 +543,9 @@ func (a *App) fetchAll(ctx context.Context, client *dna.Client, req *dna.Request
 		items = append(items, pr.Items...)
 		total = pr.TotalCount
 		skip += len(pr.Items)
+		if progress != nil {
+			progress(len(items), total)
+		}
 		if len(pr.Items) == 0 || int64(skip) >= total {
 			break
 		}
@@ -558,7 +589,79 @@ func (a *App) printDryRun(ctx context.Context, client *dna.Client, op *ops.Opera
 	if !res.HasCredentials() {
 		out["warning"] = "no credentials configured; the real request would fail with exit code 3"
 	}
+	if f, err := a.format(); err == nil && f == output.Table && a.flags.jq == "" {
+		fmt.Fprint(a.Out, a.humanDryRun(op, hreq.Method, hreq.URL.String(), headers, body, res))
+		return nil
+	}
 	return a.printJSON(out)
+}
+
+// humanDryRun renders a dry run for a person: what would be sent, where,
+// and how risky it is.
+func (a *App) humanDryRun(op *ops.Operation, method, target string, headers map[string]string, body []byte, res *config.Resolved) string {
+	p := a.outP()
+	title := op.Summary
+	if title == "" {
+		title = "Raw API request"
+	}
+	head := p.Badge(ui.Navy, "DRY RUN") + " " + p.Bold(title) + "  " + p.Muted("nothing was sent")
+	lines := []string{
+		safetyBadge(p, op.Safety) + "  " + p.Muted("on") + " " + envName(p, res),
+		"",
+		p.BoldFg(ui.Accent, method) + " " + target,
+	}
+	names := make([]string, 0, len(headers))
+	for k := range headers {
+		names = append(names, k)
+	}
+	sort.Strings(names)
+	for _, k := range names {
+		switch strings.ToLower(k) {
+		case "user-agent", "accept":
+			continue // noise for a person; the JSON dry run lists every header
+		}
+		lines = append(lines, p.Muted(k+": "+headers[k]))
+	}
+	if len(body) > 0 {
+		var v any
+		if json.Unmarshal(body, &v) == nil {
+			b, _ := json.MarshalIndent(v, "", "  ")
+			lines = append(lines, "")
+			lines = append(lines, strings.Split(string(p.ColorizeJSON(b)), "\n")...)
+		}
+	}
+	if !res.HasCredentials() {
+		lines = append(lines, "", p.Fg(ui.Amber, "No credentials are configured: the real request would fail (exit 3). Run ")+p.Command("dna auth login"))
+	}
+	next := "Send it: run the same command without --dry-run"
+	if op.Safety.NeedsConfirmation() {
+		next += " (it asks before charging or deleting)"
+	}
+	lines = append(lines, "", p.Hint(next))
+	return p.Block(ui.Info, "◇", head, lines) + "\n"
+}
+
+func safetyBadge(p ui.Painter, s ops.Safety) string {
+	switch s {
+	case ops.Billable:
+		return p.Badge(ui.Amber, "BILLABLE") + " " + p.Muted("charges your balance")
+	case ops.Destructive:
+		return p.Badge(ui.Red, "DESTRUCTIVE") + " " + p.Muted("deletes data or is hard to undo")
+	case ops.Write:
+		return p.Fg(ui.Accent, "write") + " " + p.Muted("changes data, free of charge")
+	}
+	return p.Fg(ui.Green, "read-only") + " " + p.Muted("no side effects")
+}
+
+func envName(p ui.Painter, res *config.Resolved) string {
+	host := res.BaseURL
+	if u, err := url.Parse(res.BaseURL); err == nil && u.Host != "" {
+		host = u.Host
+	}
+	if res.Environment == dna.OTE {
+		return p.BoldFg(ui.Green, "OTE") + p.Muted(" (test) · "+host)
+	}
+	return p.BoldFg(ui.Red, strings.ToUpper(string(res.Environment))) + p.Muted(" · "+host)
 }
 
 // confirm asks the user to approve a billable or destructive operation.
@@ -566,30 +669,79 @@ func (a *App) confirm(op *ops.Operation, req *dna.Request, res *config.Resolved)
 	if !a.interactive() {
 		return &ConfirmationError{Operation: op.ID, Safety: op.Safety}
 	}
-	env := strings.ToUpper(string(res.Environment))
-	label := "BILLABLE"
+	p := a.errP()
+	tone, what := ui.Warn, "This charges your balance"
 	if op.Safety == ops.Destructive {
-		label = "DESTRUCTIVE"
+		tone, what = ui.Bad, "This deletes data or is hard to undo"
 	}
-	fmt.Fprintf(a.Err, "%s %s on %s (%s)\n", a.color("33;1", label+":"), op.Summary, a.color("1", env), res.BaseURL)
-	desc := req.Method + " " + req.Path
+	head := badgeOnly(p, op.Safety) + " " + p.Bold(op.Summary)
+	lines := []string{
+		what + " " + p.Muted("on") + " " + envName(p, res) + ".",
+		"",
+	}
+	desc := p.BoldFg(ui.Accent, req.Method) + " " + req.Path
 	if len(req.Query) > 0 {
 		desc += "?" + req.Query.Encode()
 	}
-	fmt.Fprintf(a.Err, "  %s\n", desc)
+	lines = append(lines, desc)
 	if req.Body != nil {
-		b, _ := json.Marshal(req.Body)
-		if len(b) > 400 {
-			b = append(b[:400], []byte("…")...)
-		}
-		fmt.Fprintf(a.Err, "  %s\n", b)
+		lines = append(lines, bodySummary(p, req.Body, a.width())...)
 	}
-	fmt.Fprint(a.Err, "Continue? [y/N] ")
+	lines = append(lines, "", p.Muted("Preview without sending: --dry-run · skip this question: --yes"))
+	fmt.Fprint(a.Err, p.Block(tone, "▲", head, lines))
+	fmt.Fprint(a.Err, "\n "+p.BoldFg(ui.Accent, "?")+" "+p.Bold("Continue?")+" "+p.Muted("[y/N]")+" ")
 	line, _ := bufio.NewReader(a.In).ReadString('\n')
 	if ok, valid := ops.ParseBool(strings.TrimSpace(line)); !valid || !ok {
 		return &ConfirmationError{Operation: op.ID, Safety: op.Safety, Declined: true}
 	}
 	return nil
+}
+
+func badgeOnly(p ui.Painter, s ops.Safety) string {
+	if s == ops.Destructive {
+		return p.Badge(ui.Red, "DESTRUCTIVE")
+	}
+	return p.Badge(ui.Amber, "BILLABLE")
+}
+
+// bodySummary lists the top-level fields of a request body, one per line.
+func bodySummary(p ui.Painter, body any, width int) []string {
+	b, err := json.Marshal(body)
+	if err != nil {
+		return nil
+	}
+	var m map[string]any
+	if json.Unmarshal(b, &m) != nil {
+		return []string{p.Muted(string(b))}
+	}
+	keys := make([]string, 0, len(m))
+	w := 0
+	for k := range m {
+		keys = append(keys, k)
+		if len(k) > w {
+			w = len(k)
+		}
+	}
+	sort.Strings(keys)
+	max := 80
+	if width > 0 {
+		max = width - w - 10
+	}
+	var lines []string
+	for _, k := range keys {
+		var val string
+		switch x := m[k].(type) {
+		case string:
+			val = x
+		case nil:
+			continue
+		default:
+			vb, _ := json.Marshal(x)
+			val = string(vb)
+		}
+		lines = append(lines, "  "+p.Muted(ui.PadRight(k, w))+"  "+ui.Truncate(val, max))
+	}
+	return lines
 }
 
 // explainPositional rewrites "is required" input errors for positional

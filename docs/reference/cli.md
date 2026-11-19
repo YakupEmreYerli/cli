@@ -364,7 +364,11 @@ dna mcp
 
 ## dna mcp config
 
-Prints how to register dna with an MCP client. Clients: claude-code, claude-desktop, cursor, vscode, codex, gemini, windsurf (default: all).
+Prints how to register dna with an AI agent (MCP client): the command to run or the snippet for its config file.
+
+Clients: claude-code, chatgpt, cursor, claude-desktop, codex, vscode, windsurf, gemini, zed, cline, roo, continue, goose, opencode, amazonq, jetbrains, lmstudio, warp, copilot-cli, other, chat (default: all).
+
+--env, --profile, --read-only and --no-billable are added to the server command. --full-path uses the absolute path of the dna program, for apps that start with a different PATH than your terminal (Claude Desktop on macOS, for example).
 
 ```
 dna mcp config [flags]
@@ -372,14 +376,16 @@ dna mcp config [flags]
 
 | flag | type | description |
 |---|---|---|
-| `--client` | string | MCP client to print config for |
+| `--client` | string | MCP client to print config for: claude-code, chatgpt, cursor, claude-desktop, codex, vscode, windsurf, gemini, zed, cline, roo, continue, goose, opencode, amazonq, jetbrains, lmstudio, warp, copilot-cli, other, chat |
+| `--full-path` |  | Use the absolute path of the dna program |
 | `--no-billable` |  | Add --no-billable to the server command |
 
 **Examples**
 
 ```bash
-dna mcp config --client claude-code
+dna mcp config --client claude-code --env ote
 dna mcp config --client cursor --env ote --read-only
+dna mcp config --client claude-desktop --full-path
 ```
 
 ## dna mcp serve

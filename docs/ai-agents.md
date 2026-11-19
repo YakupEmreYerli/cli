@@ -16,10 +16,11 @@ All three are generated from the same operation registry, so they always describ
 
 | property | detail |
 |---|---|
-| Machine-readable output | JSON whenever stdout is not a terminal (`-o json` to force); the API response is passed through unchanged |
+| Machine-readable output | JSON whenever stdout is not a terminal or an agent is detected (`AI_AGENT`, `CLAUDECODE`, `DNA_AGENT=1`, [more](usage.md#ai-agents-and-the-terminal-ui)); `-o json` to force; the API response is passed through unchanged |
+| No terminal UI for agents | the colored screens, the spinner and the interactive shell are for people only; `dna` on its own prints the help for agents; agents get the same bytes as before |
 | Machine-readable errors | `{"error":{"kind","code","message","status","fields","hint","correlationId","retryable","exitCode"}}` on stderr |
 | Stable exit codes | 0 ok, 2 invalid input, 3 auth, 4 not found, 5 rejected, 6 rate limited, 7 server, 8 network, 9 confirmation required, 10 read-only ([errors.md](errors.md)) |
-| No hidden prompts | prompts only appear on an interactive terminal; otherwise commands fail fast with a clear code |
+| No hidden prompts | prompts only appear on an interactive terminal and never under an agent, even in a pseudo-terminal; otherwise commands fail fast with a clear code |
 | Money and data safety | `billable` and `destructive` commands need `--yes` (CLI) or `confirm=true` (MCP) |
 | Preview | `--dry-run` prints the exact request; MCP calls without `confirm` return a preview |
 | Self-description | `dna schema <op>` gives the input JSON Schema plus an example; `dna enums` explains every coded value |
@@ -30,10 +31,30 @@ All three are generated from the same operation registry, so they always describ
 
 ### Setup
 
+The easiest way: run `dna` on its own and choose **Connect an AI agent** (or type `/agent`). Pick your agent from
+the list, choose the environment (OTE or production) and how much it may do (read-only, no purchases, or everything
+with confirmations), and dna:
+
+- shows the exact command or config snippet for that agent, with the absolute path of the dna program (AI apps often
+  start with a different `PATH` than your terminal),
+- runs the setup for you where it can (`claude mcp add`, `code --add-mcp`, Cursor's install link, or adding itself
+  to the agent's JSON / TOML config file while keeping your other servers and saving a `.bak` copy),
+- checks that the credentials for that environment are stored where the agent's dna will find them (not only in
+  your terminal's environment variables),
+- copies the snippet or one of the ready-made prompts to the clipboard.
+
+Agents in the list: Claude Code, ChatGPT (through OpenAI Codex, or ready-made prompts), Cursor, Claude Desktop,
+OpenAI Codex, VS Code (GitHub Copilot), Windsurf, Gemini CLI, Zed, Cline, Roo Code, Continue, Goose, opencode,
+Amazon Q Developer, JetBrains AI Assistant, LM Studio, Warp, GitHub Copilot CLI, any other MCP client, and chat
+assistants without local tools.
+
+The same instructions without the shell:
+
 ```bash
 dna auth login --env ote                 # once; or provide env vars in the client config
 dna mcp config                           # prints snippets for every client
 dna mcp config --client claude-code --env ote --read-only
+dna mcp config --client claude-desktop --env ote --full-path   # absolute path of the dna program
 ```
 
 **Claude Code**

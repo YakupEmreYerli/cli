@@ -25,6 +25,8 @@ const (
 	EnvOutput   = "DNA_OUTPUT"
 	EnvReadOnly = "DNA_READ_ONLY"
 	EnvNoColor  = "NO_COLOR"
+	// EnvAgent forces agent mode on (1) or off (0); see App.agentMode.
+	EnvAgent = "DNA_AGENT"
 )
 
 // Profile is one named set of credentials and settings.

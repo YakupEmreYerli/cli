@@ -39,7 +39,8 @@ When the output is not a table (piped, `-o json`, …), errors are printed to **
 }
 ```
 
-On a terminal the same information is shown as text with a `Hint:` line.
+On a terminal (and not under an AI agent) the same information is shown as a short colored block: a headline, the
+message, the API code and HTTP status, the fields to fix and the suggested next step (`→`).
 
 | field | meaning |
 |---|---|

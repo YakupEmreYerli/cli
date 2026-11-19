@@ -10,6 +10,7 @@ import (
 	"github.com/domainreseller/cli/internal/dna"
 	"github.com/domainreseller/cli/internal/ops"
 	"github.com/domainreseller/cli/internal/output"
+	"github.com/domainreseller/cli/internal/ui"
 )
 
 // Exit codes. They are part of the CLI's contract; see docs/errors.md.
@@ -180,29 +181,89 @@ func (a *App) reportError(err error) int {
 		fmt.Fprintln(a.Err, string(b))
 		return p.ExitCode
 	}
-	fmt.Fprintln(a.Err, a.color("31", "Error: ")+p.Message)
-	if p.Code != "" && p.Code != p.Message {
-		fmt.Fprintf(a.Err, "  code: %s", p.Code)
-		if p.Status != 0 {
-			fmt.Fprintf(a.Err, " (HTTP %d)", p.Status)
-		}
-		fmt.Fprintln(a.Err)
-	}
-	for _, f := range p.Fields {
-		if f.Field != "" {
-			fmt.Fprintf(a.Err, "  - %s: %s\n", f.Field, f.Message)
-		} else {
-			fmt.Fprintf(a.Err, "  - %s\n", f.Message)
-		}
-	}
-	if p.Details != "" && p.Details != p.Message {
-		fmt.Fprintln(a.Err, "  details: "+p.Details)
-	}
-	if p.CorrelationID != "" {
-		fmt.Fprintln(a.Err, "  correlation id: "+p.CorrelationID)
-	}
-	if p.Hint != "" {
-		fmt.Fprintln(a.Err, a.color("36", "Hint: ")+p.Hint)
-	}
+	fmt.Fprint(a.Err, a.humanError(p))
 	return p.ExitCode
+}
+
+// errorTitles are the headlines of human error messages, by kind.
+var errorTitles = map[string]string{
+	"auth": "Authentication failed", "forbidden": "Not allowed", "not_found": "Not found",
+	"validation": "Rejected by the API", "conflict": "Conflict", "rate_limited": "Rate limited",
+	"server": "API server error", "network": "Network error", "timeout": "Timed out", "canceled": "Canceled",
+	"invalid_input": "Invalid input", "usage": "Usage error", "confirmation_required": "Confirmation required",
+	"declined": "Canceled, nothing was sent", "read_only": "Blocked by read-only mode",
+}
+
+// humanError renders an error for a person: a headline, the message, the
+// API code and fields, and the suggested next step.
+func (a *App) humanError(e errorPayload) string {
+	p := a.errP()
+	tone, icon := ui.Bad, "✗"
+	switch e.Kind {
+	case "confirmation_required", "declined", "read_only", "rate_limited", "canceled":
+		tone, icon = ui.Warn, "▲"
+	}
+	title := errorTitles[e.Kind]
+	if title == "" {
+		title = "Error"
+	}
+	head := p.Bold(title) + "  " + p.Muted(fmt.Sprintf("exit %d", e.ExitCode))
+
+	var lines []string
+	if e.Message != "" && !strings.EqualFold(e.Message, title) {
+		lines = append(lines, styleCode(p, e.Message))
+	}
+	var meta []string
+	if e.Code != "" && e.Code != e.Message {
+		meta = append(meta, "code "+e.Code)
+	}
+	if e.Status != 0 {
+		meta = append(meta, fmt.Sprintf("HTTP %d", e.Status))
+	}
+	if len(meta) > 0 {
+		lines = append(lines, p.Muted(strings.Join(meta, " · ")))
+	}
+	if len(e.Fields) > 0 {
+		lines = append(lines, "")
+		w := 0
+		for _, f := range e.Fields {
+			if fw := ui.Width(f.Field); fw > w {
+				w = fw
+			}
+		}
+		for _, f := range e.Fields {
+			if f.Field == "" {
+				lines = append(lines, p.Fg(tone.Color(), "•")+" "+styleCode(p, f.Message))
+				continue
+			}
+			lines = append(lines, p.Fg(tone.Color(), "•")+" "+p.Bold(ui.PadRight(f.Field, w))+"  "+styleCode(p, f.Message))
+		}
+	}
+	if e.Details != "" && e.Details != e.Message {
+		lines = append(lines, "", p.Muted(e.Details))
+	}
+	if e.CorrelationID != "" {
+		lines = append(lines, p.Muted("correlation id "+e.CorrelationID))
+	}
+	if e.Hint != "" {
+		lines = append(lines, "", p.Hint(styleCode(p, e.Hint)))
+	}
+	return p.Block(tone, icon, head, lines) + "\n"
+}
+
+// styleCode colors `command` spans of a message as commands (and drops the
+// backticks when colors make them visible anyway).
+func styleCode(p ui.Painter, s string) string {
+	if !p.On() || strings.Count(s, "`") < 2 {
+		return s
+	}
+	var sb strings.Builder
+	for i, part := range strings.Split(s, "`") {
+		if i%2 == 1 {
+			sb.WriteString(p.Command(part))
+			continue
+		}
+		sb.WriteString(part)
+	}
+	return sb.String()
 }

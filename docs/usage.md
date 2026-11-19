@@ -63,13 +63,103 @@ Problems exit with code 2 and list every field. Enum names are normalized for yo
 
 | `-o` | output |
 |---|---|
-| `auto` (default) | `table` on a terminal, `json` when piped |
-| `json` | the API response, unchanged (pretty on a terminal, compact when piped) |
+| `auto` (default) | `table` when a person is at a terminal; `json` when piped or run by an AI agent ([below](#ai-agents-and-the-terminal-ui)) |
+| `json` | the API response, unchanged (pretty and syntax-colored on a terminal, compact and plain when piped) |
 | `jsonl` | one JSON value per line, for list responses |
-| `table` | aligned columns for lists, key/value view for objects; enum numbers become names, dates are shortened |
+| `table` | the human view described below; enum numbers become names, dates are shortened |
 | `raw` | the response bytes exactly as received |
 
-Set a default with `DNA_OUTPUT=json`. Commands that return nothing print `{"success":true}` (`OK` in table mode).
+Set a default with `DNA_OUTPUT=json`. Commands that return nothing print `{"success":true}` (`✓ Done` in table mode).
+
+### The terminal UI
+
+When you run dna yourself in a terminal, the table format is a small UI rather than a log:
+
+- **Tailored screens** for the commands people run most: `domain search` answers "available or taken, and for how
+  much", `domain bulk-search` compares several names, `domain list` shows status dots and how many days are left
+  (amber within 30 days, red once expired), `domain info` is a card with dates, lock, privacy, nameservers and contacts,
+  `dns list` shows one value per line, `account get` shows both balances.
+- **Every other command** gets an aligned table (lists) or a card (objects) with colored statuses, money with two
+  decimals, `✓` for true and relative expiry dates. Tables shrink to the terminal width.
+- **Next steps:** most screens end with the command you probably want next (`→ dna domain register ... --dry-run`).
+- **Errors** are a short block: what went wrong, the API code, the fields to fix and the next step.
+- **Billable and destructive commands** show what will be charged or deleted, on which environment, before asking
+  `Continue? [y/N]`. `--dry-run` shows the request as a readable panel.
+- **A spinner** on stderr while a request runs (it erases itself, so it never ends up in captured output).
+- **`--help`** is colored.
+
+Colors are the Domain Name API brand: the green of the logo (`#1CCC99`), the navy of the website (`#212A4D`, used
+for badges) and its slate grey for secondary text.
+
+### The interactive shell
+
+Run `dna` on its own in a terminal to open the shell (wide terminals get the big block-letter logo):
+
+```text
+╭─ Domain Name API · dna ──────────────────────────────────────────────╮
+│              ╔╦╗┌─┐┌┬┐┌─┐┬┌┐┌  ╔╗╔┌─┐┌┬┐┌─┐  ╔═╗╔═╗╦                │
+│               ║║│ ││││├─┤││││  ║║║├─┤│││├┤   ╠═╣╠═╝║                │
+│              ═╩╝└─┘┴ ┴┴ ┴┴┘└┘  ╝╚╝┴ ┴┴ ┴└─┘  ╩ ╩╩  ╩                │
+╰──────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────╮
+│ › acme                                                               │
+╰──────────────────────────────────────────────────────────────────────╯
+  acme · 2 free of 4
+   ✗ acme.com          taken
+ › ✓ acme.net      11.49 USD / year
+   ✓ acme.io       39.00 USD / year  premium
+   – acme.zz     not offered
+  ↑↓ choose · enter what next (register, transfer, …) · esc back
+   OTE  test  ·  Acme Digital Ltd.  ·  1,284.50 USD      ? keys · ctrl+c ×2 exit
+```
+
+Nothing has to be memorised. Everything is a choice with ↑↓ and Enter, and **Esc always goes back one step**:
+
+| start with | what happens |
+|---|---|
+| **↓ on an empty line** | quick actions: *My domains*, *Register a domain*, *DNS records*, *Balance*, *Switch environment*, *Connect an AI agent*, *Keys and help* (or press their number) |
+| **typing a name** (`acme`) | availability and prices across .com .net .org .io .co .app .dev .ai appear while you type; ↓ picks a result and offers what to do: register a free one, check a transfer for a taken one |
+| **`/`** | every shell command with a description: `/domains`, `/manage`, `/register`, `/search`, `/info`, `/dns`, `/renew`, `/balance`, `/transactions`, `/env`, `/login`, `/status`, `/doctor`, `/mcp`, `/help`, `/clear`, `/exit` |
+| **a dna command** | `domain info acme.com`, `dns list acme.com --jq ...`; Tab completes command names and your own domain names |
+
+- **Your domains** (`/domains`): type to search, Enter opens the domain's menu: *Details*, *DNS records*, *Renew…*,
+  *Lock / Unlock transfers*, *WHOIS privacy on / off*, *Nameservers…*, *Auth code*. Each also has a one-key shortcut
+  shown next to it.
+- **Connect an AI agent** (`/agent`): choose from 20+ agents (Claude Code, ChatGPT, Cursor, Claude Desktop, Codex,
+  VS Code, Windsurf, Gemini CLI, Zed, …), the environment and how much the agent may do; dna shows the exact setup,
+  can run it or add itself to the agent's config file, checks the credentials and copies ready-made prompts. See
+  [AI agents](ai-agents.md#mcp-server).
+- **Anything that needs a domain** (`/dns`, `/renew`, *DNS records*, …) opens a searchable list of your domains; a
+  domain that is not in the list can be typed in full.
+- **Short forms instead of flags:** *Register* (years, nameservers, contact handle, with the total price), *Renew*
+  (years), *Add a DNS record* (type, name, value, TTL, with an example for each type), *Nameservers*, *Transfer in*
+  (auth code). ←→ change a choice, Enter moves on and submits on the last field. The contact handle and nameservers
+  you used are remembered for the next registration.
+- **Billable and destructive steps** end in a confirmation box built from a dry run of the exact request (fields,
+  price, environment, method and path). *Cancel* is selected by default; nothing is sent until you choose the action
+  or press `y`. The balance in the status line updates afterwards.
+- **`/env ote`** and **`/env production`** (or the quick action) switch the environment for the session; the status
+  line always shows which one is active (PRODUCTION in red) and your balance.
+- ↑ browses the history (kept next to the config file, without lines that contain `--api-key`), Esc cancels a running
+  request, Ctrl+L clears the screen, Ctrl+C twice exits, `?` shows every key.
+
+The shell only opens for a person at a real terminal. Piped, under an AI agent or with `-o json`, `dna` on its own
+prints the help as before.
+
+Colors follow the usual conventions: `NO_COLOR=1` or `--no-color` turns them off (the layout stays),
+`FORCE_COLOR=1` keeps them for `-o table` when stdout is not a terminal, and `TERM=dumb` disables them. On Windows
+dna enables ANSI support in the console itself (Windows 10 and newer).
+
+### AI agents and the terminal UI
+
+The UI never reaches scripts or agents:
+
+- When stdout is not a terminal, the output is plain JSON, whatever `FORCE_COLOR` says.
+- Some agents run commands in a pseudo-terminal, which looks like a person at a terminal. dna detects them through
+  `AI_AGENT` (set by Claude Code and other agents), `CLAUDECODE`, `GEMINI_CLI`, `CODEX_SANDBOX` or `CURSOR_AGENT`, and
+  then behaves exactly as on a pipe: JSON output, JSON errors, no spinner and no prompt (billable and destructive
+  commands exit with code 9 instead of waiting for an answer).
+- `DNA_AGENT=1` forces this agent mode; `DNA_AGENT=0` turns detection off.
 
 ### jq
 
@@ -92,12 +182,12 @@ single `{"items": [...], "totalCount": N}` object.
 
 | flag | effect |
 |---|---|
-| `--dry-run` | validate, then print the HTTP request (method, URL, headers with the key masked, body) instead of sending it |
+| `--dry-run` | validate, then print the HTTP request (method, URL, headers with the key masked, body) instead of sending it; JSON when piped, a readable panel on a terminal |
 | `--yes` / `-y` | confirm billable/destructive commands without a prompt |
 | `--read-only` | refuse anything that is not a read (also `DNA_READ_ONLY=1`, or a read-only profile) |
 
-Without a terminal and without `--yes`, billable and destructive commands exit with code 9. A script cannot
-accidentally buy something.
+Without a terminal (or under an AI agent) and without `--yes`, billable and destructive commands exit with code 9. A
+script cannot accidentally buy something.
 
 ## Debugging
 

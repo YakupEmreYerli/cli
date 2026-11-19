@@ -14,6 +14,8 @@ This guide is generated from the CLI itself, so it matches the installed version
    Prefer OTE while experimenting. `dna auth status -o json` shows what is in effect.
 2. **Output.** Piped output is JSON. Pass `-o json` explicitly to be safe; use `--jq` to select fields
    (`--jq .items[].domainName`). Errors are a JSON object `{"error":{...}}` on stderr.
+   The colored terminal UI is for people only: when `AI_AGENT`, `CLAUDECODE` or `DNA_AGENT=1` is set, dna prints
+   JSON, never prompts and shows no spinner, even in a pseudo-terminal.
 3. **Safety classes.** Every command is `read`, `write`, `destructive` or `billable` (see the table).
    Billable and destructive commands fail with exit code 9 unless `--yes` is given.
    **Never add --yes on your own:** show the user the plan (`--dry-run` prints the exact request), get explicit approval, then re-run with `--yes`.

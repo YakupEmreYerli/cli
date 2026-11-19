@@ -15,6 +15,7 @@ import (
 
 	"github.com/domainreseller/cli/internal/config"
 	"github.com/domainreseller/cli/internal/dna"
+	"github.com/domainreseller/cli/internal/ui"
 )
 
 var uuidRe = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
@@ -153,13 +154,19 @@ func (a *App) newLoginCmd() *cobra.Command {
 			}
 			result["currentProfile"] = cfg.CurrentProfile
 			if !a.machineOutput() {
-				fmt.Fprintf(a.Out, "Saved profile %q (%s) to %s\n", profile, env, cfg.Path())
+				p := a.outP()
+				fmt.Fprintln(a.Out)
 				if acct, ok := result["account"].(*account); ok {
-					fmt.Fprintf(a.Out, "Logged in as %s — balance %.2f USD / %.2f TRY\n", acct.ResellerName, acct.UsdBalance, acct.TryBalance)
+					fmt.Fprintf(a.Out, "  %s Logged in as %s\n", p.BoldFg(ui.Green, "✓"), p.Bold(acct.ResellerName))
+					fmt.Fprintf(a.Out, "    %s %s USD · %s TRY\n", p.Muted("Balance"), p.Bold(fmtMoney(acct.UsdBalance)), p.Bold(fmtMoney(acct.TryBalance)))
+				} else {
+					fmt.Fprintf(a.Out, "  %s Saved without checking the credentials (--no-verify)\n", p.BoldFg(ui.Amber, "▲"))
 				}
+				fmt.Fprintf(a.Out, "    %s %s (%s) in %s\n", p.Muted("Profile"), p.Bold(profile), env, p.Muted(cfg.Path()))
 				if cfg.CurrentProfile != profile {
-					fmt.Fprintf(a.Out, "Use it with --profile %s (or --env %s), or make it the default: dna config use %s\n", profile, env, profile)
+					fmt.Fprintf(a.Out, "\n  %s\n", p.Hint(p.Muted("Use it with ")+p.Command("--profile "+profile)+p.Muted(" (or ")+p.Command("--env "+string(env))+p.Muted("), or make it the default: ")+p.Command("dna config use "+profile)))
 				}
+				fmt.Fprintln(a.Out)
 				return nil
 			}
 			return a.printJSON(result)
@@ -230,6 +237,10 @@ func (a *App) newStatusCmd() *cobra.Command {
 func (a *App) printStatus(out map[string]any) error {
 	if a.machineOutput() {
 		return a.printJSON(out)
+	}
+	if a.human() {
+		fmt.Fprint(a.Out, a.humanStatus(out))
+		return nil
 	}
 	keys := []string{"profile", "environment", "baseUrl", "resellerId", "apiKey", "readOnly", "authenticated"}
 	for _, k := range keys {

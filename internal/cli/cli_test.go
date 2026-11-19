@@ -139,7 +139,7 @@ func TestJQAndTable(t *testing.T) {
 		t.Errorf("jq: exit %d out %q err %q", r.code, r.stdout, r.stderr)
 	}
 	r = run(t, api, nil, "", "domain", "list", "-o", "table")
-	if !strings.Contains(r.stdout, "PendingDelete") || !strings.Contains(r.stdout, "DOMAIN NAME") {
+	if !strings.Contains(r.stdout, "PendingDelete") || !strings.Contains(r.stdout, "DOMAIN") || strings.Contains(r.stdout, "\x1b[") {
 		t.Errorf("table should show enum names:\n%s", r.stdout)
 	}
 }

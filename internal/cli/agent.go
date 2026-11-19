@@ -2,12 +2,10 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -103,6 +101,8 @@ This guide is generated from the CLI itself, so it matches the installed version
    Prefer OTE while experimenting. ` + "`dna auth status -o json`" + ` shows what is in effect.
 2. **Output.** Piped output is JSON. Pass ` + "`-o json`" + ` explicitly to be safe; use ` + "`--jq`" + ` to select fields
    (` + "`--jq .items[].domainName`" + `). Errors are a JSON object ` + "`{\"error\":{...}}`" + ` on stderr.
+   The colored terminal UI is for people only: when ` + "`AI_AGENT`" + `, ` + "`CLAUDECODE`" + ` or ` + "`DNA_AGENT=1`" + ` is set, dna prints
+   JSON, never prompts and shows no spinner, even in a pseudo-terminal.
 3. **Safety classes.** Every command is ` + "`read`" + `, ` + "`write`" + `, ` + "`destructive`" + ` or ` + "`billable`" + ` (see the table).
    Billable and destructive commands fail with exit code 9 unless ` + "`--yes`" + ` is given.
    **Never add --yes on your own:** show the user the plan (` + "`--dry-run`" + ` prints the exact request), get explicit approval, then re-run with ` + "`--yes`" + `.
@@ -248,90 +248,57 @@ look-only access, or --no-billable to keep purchases out of reach.`,
 	addServerFlags(tools)
 
 	var client string
+	var fullPath bool
 	config := &cobra.Command{
 		Use:   "config",
 		Short: "Print MCP client configuration for dna",
-		Long:  "Prints how to register dna with an MCP client. Clients: claude-code, claude-desktop, cursor, vscode, codex, gemini, windsurf (default: all).",
-		Example: `  dna mcp config --client claude-code
-  dna mcp config --client cursor --env ote --read-only`,
+		Long: "Prints how to register dna with an AI agent (MCP client): the command to run or the snippet for its config file.\n\n" +
+			"Clients: " + strings.Join(agentIDs(), ", ") + " (default: all).\n\n" +
+			"--env, --profile, --read-only and --no-billable are added to the server command. --full-path uses the absolute path of " +
+			"the dna program, for apps that start with a different PATH than your terminal (Claude Desktop on macOS, for example).",
+		Example: `  dna mcp config --client claude-code --env ote
+  dna mcp config --client cursor --env ote --read-only
+  dna mcp config --client claude-desktop --full-path`,
 		Args: cobra.NoArgs,
 		RunE: func(*cobra.Command, []string) error {
-			args := []string{"mcp", "serve"}
-			if a.flags.env != "" {
-				args = append(args, "--env", a.flags.env)
-			} else if a.flags.ote {
-				args = append(args, "--env", "ote")
+			env := a.flags.env
+			if a.flags.ote {
+				env = "ote"
 			}
-			if a.flags.profile != "" {
-				args = append(args, "--profile", a.flags.profile)
+			launch := mcpLaunchFor(env, a.flags.profile, a.flags.readOnly, noBillable)
+			if fullPath {
+				launch.Bin = dnaPath()
 			}
-			if a.flags.readOnly {
-				args = append(args, "--read-only")
+			text, err := mcpConfigText(client, launch)
+			if err != nil {
+				return usageErr(err)
 			}
-			if noBillable {
-				args = append(args, "--no-billable")
-			}
-			bin := "dna"
-			fmt.Fprint(a.Out, mcpConfigText(client, bin, args))
+			fmt.Fprint(a.Out, text)
 			return nil
 		},
 	}
-	config.Flags().StringVar(&client, "client", "", "MCP client to print config for")
+	config.Flags().StringVar(&client, "client", "", "MCP client to print config for: "+strings.Join(agentIDs(), ", "))
 	config.Flags().BoolVar(&noBillable, "no-billable", false, "Add --no-billable to the server command")
+	config.Flags().BoolVar(&fullPath, "full-path", false, "Use the absolute path of the dna program")
 
 	cmd.AddCommand(serve, tools, config)
 	return cmd
 }
 
-func mcpConfigText(client, bin string, args []string) string {
-	server := map[string]any{"command": bin, "args": args}
-	jsonBlock := func(root string, extra map[string]any) string {
-		entry := map[string]any{}
-		for k, v := range server {
-			entry[k] = v
-		}
-		for k, v := range extra {
-			entry[k] = v
-		}
-		b, _ := json.MarshalIndent(map[string]any{root: map[string]any{"dna": entry}}, "", "  ")
-		return string(b)
+// mcpLaunchFor is the server command for the given settings.
+func mcpLaunchFor(env, profile string, readOnly, noBillable bool) mcpLaunch {
+	args := []string{"mcp", "serve"}
+	if env != "" {
+		args = append(args, "--env", env)
 	}
-	quoted := make([]string, len(args))
-	for i, a := range args {
-		quoted[i] = a
+	if profile != "" {
+		args = append(args, "--profile", profile)
 	}
-	sections := map[string]string{
-		"claude-code": "# Claude Code (add --scope project to share it via .mcp.json)\nclaude mcp add dna -- " + bin + " " + strings.Join(quoted, " ") + "\n",
-		"claude-desktop": "# Claude Desktop: claude_desktop_config.json (Settings > Developer > Edit Config)\n" +
-			jsonBlock("mcpServers", nil) + "\n",
-		"cursor":   "# Cursor: ~/.cursor/mcp.json or .cursor/mcp.json\n" + jsonBlock("mcpServers", nil) + "\n",
-		"windsurf": "# Windsurf: ~/.codeium/windsurf/mcp_config.json\n" + jsonBlock("mcpServers", nil) + "\n",
-		"vscode":   "# VS Code: .vscode/mcp.json\n" + jsonBlock("servers", map[string]any{"type": "stdio"}) + "\n",
-		"gemini":   "# Gemini CLI: ~/.gemini/settings.json\n" + jsonBlock("mcpServers", nil) + "\n",
-		"codex": "# OpenAI Codex CLI: ~/.codex/config.toml\n[mcp_servers.dna]\ncommand = \"" + bin + "\"\nargs = [" +
-			func() string {
-				parts := make([]string, len(args))
-				for i, a := range args {
-					parts[i] = fmt.Sprintf("%q", a)
-				}
-				return strings.Join(parts, ", ")
-			}() + "]\n",
+	if readOnly {
+		args = append(args, "--read-only")
 	}
-	if client != "" {
-		if s, ok := sections[client]; ok {
-			return s
-		}
-		return fmt.Sprintf("unknown client %q; known: claude-code, claude-desktop, cursor, vscode, codex, gemini, windsurf\n", client)
+	if noBillable {
+		args = append(args, "--no-billable")
 	}
-	names := make([]string, 0, len(sections))
-	for k := range sections {
-		names = append(names, k)
-	}
-	sort.Strings(names)
-	var b strings.Builder
-	for _, n := range names {
-		b.WriteString(sections[n] + "\n")
-	}
-	b.WriteString("# Credentials: run `dna auth login` once, or add an \"env\" block with DNA_RESELLER_ID and DNA_API_KEY.\n")
-	return b.String()
+	return mcpLaunch{Bin: "dna", Args: args}
 }
