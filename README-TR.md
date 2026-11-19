@@ -93,11 +93,14 @@ dna --ote account get
 dna --ote domain search example.com
 dna --ote product tlds --filter-text com
 
-# 3. Bir satın almayı önizleyin, ardından gerçekleştirin (onay ister)
-dna --ote domain register example.com --ns tr.apiname.com,eu.apiname.com --handle <HANDLE> --dry-run
-dna --ote domain register example.com --ns tr.apiname.com,eu.apiname.com --handle <HANDLE>
+# 3. Bir kez kontak oluşturun: dna bilgileri sorar ve onu varsayılan kontağınız yapar
+dna --ote contact create
 
-# 4. Canlı ortam
+# 4. Bir satın almayı önizleyin, ardından gerçekleştirin (onay ister)
+dna --ote domain register example.com --dry-run
+dna --ote domain register example.com
+
+# 5. Canlı ortam
 dna auth login
 dna domain list
 ```

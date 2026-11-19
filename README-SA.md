@@ -93,11 +93,14 @@ dna --ote account get
 dna --ote domain search example.com
 dna --ote product tlds --filter-text com
 
-# 3. عاين عملية الشراء، ثم نفّذها (سيُطلب منك التأكيد)
-dna --ote domain register example.com --ns tr.apiname.com,eu.apiname.com --handle <HANDLE> --dry-run
-dna --ote domain register example.com --ns tr.apiname.com,eu.apiname.com --handle <HANDLE>
+# 3. أنشئ جهة اتصال مرة واحدة: يسألك dna عن البيانات ويجعلها جهة الاتصال الافتراضية
+dna --ote contact create
 
-# 4. بيئة الإنتاج
+# 4. عاين عملية الشراء، ثم نفّذها (سيُطلب منك التأكيد)
+dna --ote domain register example.com --dry-run
+dna --ote domain register example.com
+
+# 5. بيئة الإنتاج
 dna auth login
 dna domain list
 ```

@@ -91,7 +91,10 @@ func (s *shell) onLiveDebounce(m liveDebounceMsg) tea.Cmd {
 		var res struct {
 			Infos []map[string]any `json:"infos"`
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+		// registries that do not answer can hold a search for close to a
+		// minute (OTE takes ~50s for .io, .co and .ai); typing on cancels nothing
+		// but makes this result stale, so a long wait costs only the spinner
+		ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 		defer cancel()
 		_, err = client.Do(ctx, &dna.Request{Method: "POST", Path: "/api/v1/domains/bulk-search", Body: body}, &res)
 		return liveResultMsg{seq: m.seq, query: m.query, results: res.Infos, err: err}
@@ -194,9 +197,13 @@ func (s *shell) liveView(w int) []string {
 		case "NOTAVAILABLE":
 			mark = p.Fg(ui.Red, "✗")
 			info = p.Muted(ui.PadLeft("taken", 13))
-		default:
+		case "UNSUPPORTEDTLD":
 			mark = p.Muted("–")
 			info = p.Muted(ui.PadLeft("not offered", 13))
+		default:
+			// ERROR or NONE: the registry did not answer; not the same as taken
+			mark = p.Fg(ui.Amber, "?")
+			info = p.Muted(ui.PadLeft("no answer", 13))
 		}
 		label := ui.PadRight(name, cw)
 		if selected {

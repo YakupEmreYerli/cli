@@ -93,11 +93,14 @@ dna --ote account get
 dna --ote domain search example.com
 dna --ote product tlds --filter-text com
 
-# 3. 先预览购买，再正式执行（会要求确认）
-dna --ote domain register example.com --ns tr.apiname.com,eu.apiname.com --handle <HANDLE> --dry-run
-dna --ote domain register example.com --ns tr.apiname.com,eu.apiname.com --handle <HANDLE>
+# 3. 只需创建一次联系人：dna 会逐项询问，并把它设为默认联系人
+dna --ote contact create
 
-# 4. 正式环境
+# 4. 先预览购买，再正式执行（会要求确认）
+dna --ote domain register example.com --dry-run
+dna --ote domain register example.com
+
+# 5. 正式环境
 dna auth login
 dna domain list
 ```

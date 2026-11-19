@@ -202,9 +202,16 @@ func (m *menu) view(s *shell, w int) []string {
 		}
 	}
 	inner := min(w, 100) - 4
-	hasKeys := false
+	// on a narrow terminal one long label must not push every description off
+	if c := max(12, inner*2/5); lw > c {
+		lw = c
+	}
+	hasKeys, kw := false, 0
 	for _, it := range items {
 		hasKeys = hasKeys || it.key != ""
+	}
+	if hasKeys {
+		kw = 3
 	}
 	for i := m.top; i < m.top+rows && i < len(items); i++ {
 		it := items[i]
@@ -215,11 +222,12 @@ func (m *menu) view(s *shell, w int) []string {
 		if it.key != "" {
 			key = p.Fg(ui.Green, it.key) + "  "
 		}
-		desc := ui.Truncate(it.desc, max(0, inner-lw-10))
+		desc := ui.Truncate(it.desc, max(0, inner-lw-kw-5))
+		label := ui.PadRight(ui.Truncate(it.label, lw), lw)
 		if i == m.sel {
-			lines = append(lines, p.BoldFg(ui.Green, "›")+" "+key+p.BoldFg(ui.Green, ui.PadRight(it.label, lw))+"  "+desc)
+			lines = append(lines, p.BoldFg(ui.Green, "›")+" "+key+p.BoldFg(ui.Green, label)+"  "+desc)
 		} else {
-			lines = append(lines, "  "+key+ui.PadRight(it.label, lw)+"  "+p.Muted(desc))
+			lines = append(lines, "  "+key+label+"  "+p.Muted(desc))
 		}
 	}
 	if len(items) == 0 && (m.loading == nil || !m.loading(s)) {
@@ -255,6 +263,8 @@ type formField struct {
 	optLabel func(v string) string
 	choice   int
 	required bool
+	// pick, on a choice field, opens a full list on Enter (←→ still switch).
+	pick func(s *shell, f *formField) tea.Cmd
 }
 
 func textField(name, label, value, placeholder, hint string, required bool) *formField {
@@ -344,6 +354,9 @@ func (f *form) key(s *shell, k tea.KeyMsg) tea.Cmd {
 		f.setFocus(f.focus - 1)
 		return nil
 	case "enter":
+		if cur != nil && cur.pick != nil {
+			return cur.pick(s, cur)
+		}
 		if cur != nil && f.focus < len(f.fields)-1 {
 			f.setFocus(f.focus + 1)
 			return nil
@@ -397,7 +410,10 @@ func (f *form) view(s *shell, w int) []string {
 	}
 	var lines []string
 	if f.intro != "" {
-		lines = append(lines, p.Muted(f.intro), "")
+		for _, l := range wrapCode(f.intro, inner) {
+			lines = append(lines, p.Muted(l))
+		}
+		lines = append(lines, "")
 	}
 	for i, fld := range f.fields {
 		focused := i == f.focus

@@ -2,6 +2,7 @@
 package cli
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
@@ -55,6 +56,7 @@ type App struct {
 	flags globalFlags
 	cfg   *config.File
 	res   *config.Resolved
+	inR   *bufio.Reader // see stdin()
 }
 
 type globalFlags struct {

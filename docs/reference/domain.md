@@ -461,6 +461,11 @@ Registers the domain for --period years with the given nameservers and contact h
 availability and price first with `dna domain search`. Some TLDs need --tld-attributes (see `dna
 product tlds --filter-text <tld>`).
 
+On the command line --handle and --ns may be left out: dna then uses your default contact (`dna
+contact default`) for all four roles and the platform nameservers (tr.apiname.com, eu.apiname.com).
+At a terminal without a default contact, dna lets you pick one, find the ones on your domains or
+create one on the spot.
+
 - **Safety:** BILLABLE - charges your balance; asks for confirmation (--yes to skip)
 - **API:** `POST /api/v1/domains/register`
 - **Body:** `DomainCreateWithHandleInput`
@@ -472,7 +477,7 @@ Every input can also be given as JSON with --body (inline, @file or - for stdin)
 | flag | type | description |
 |---|---|---|
 | `--domain-name` | string | Domain name (required; or argument 1 &lt;domain&gt;) |
-| `--ns` | strings | Nameserver host names (repeat or comma separate; at least 2 usually required) (required) |
+| `--ns` | strings | Nameserver host names (repeat or comma separate; at least 2 usually required; command line default: the platform nameservers) (required) |
 | `--handles` | string | Contact handles as JSON: [{"contactType":"Registrant","handle":"DNA-1"},...] (JSON, @file or -) (required; or --handle) |
 | `--period` | int | Registration period in years (1-10) |
 | `--tld-attribute` | strings | Registry-specific attribute (KEY=VALUE, repeatable) |
@@ -482,6 +487,8 @@ Every input can also be given as JSON with --body (inline, @file or - for stdin)
 **Examples**
 
 ```bash
+# Your default contact and the platform nameservers
+dna domain register example.com --period 2 --dry-run
 # Same handle for all four roles
 dna domain register example.com --period 1 --ns ns1.example.net --ns ns2.example.net --handle DNA-12345 --yes
 # Preview the request

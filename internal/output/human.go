@@ -391,7 +391,10 @@ func (h *human) card(m map[string]any, spec cardSpec) string {
 		used[titleKey] = true
 	}
 	if st, ok := m["status"].(string); ok && st != "" && ui.ToneOf(st) != ui.Neutral {
-		header += "  " + p.Status(st)
+		if header != "" {
+			header += "  "
+		}
+		header += p.Status(st)
 		used["status"] = true
 	}
 	if ok, isBool := m["success"].(bool); isBool {

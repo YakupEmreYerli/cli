@@ -47,6 +47,21 @@ func TestWidthAndTruncate(t *testing.T) {
 	}
 }
 
+func TestTruncateStyled(t *testing.T) {
+	p := Painter{Level: TrueColor}
+	s := p.Bold("hello") + " " + p.Fg(Green, "wonderful world")
+	got := TruncateStyled(s, 10)
+	if Width(got) != 10 || !strings.HasPrefix(Strip(got), "hello wond") && Strip(got) != "hello won…" {
+		t.Errorf("truncated = %q (%q)", got, Strip(got))
+	}
+	if !strings.HasSuffix(got, "\x1b[0m") {
+		t.Error("styling not reset after truncation")
+	}
+	if TruncateStyled("short", 10) != "short" {
+		t.Error("short text changed")
+	}
+}
+
 func TestToneOf(t *testing.T) {
 	for s, want := range map[string]Tone{
 		"Active": Good, "AVAILABLE": Good, "NOTAVAILABLE": Bad, "PendingDelete": Bad,

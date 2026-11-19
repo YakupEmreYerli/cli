@@ -217,7 +217,15 @@ func (b *browser) view(s *shell, w int) []string {
 			nameW = ui.Width(n)
 		}
 	}
-	nameW = max(10, min(nameW, min(w, 110)-62))
+	// Columns: "› ● " name "  " date+days (19) "   " lock (6) "  " privacy (9).
+	// Narrow terminals drop the privacy column so names stay readable.
+	bw := min(w, 110)
+	showPrivacy := bw >= 86
+	fixed := 4 + 4 + 2 + 19 + 3 + 6
+	if showPrivacy {
+		fixed += 2 + 9
+	}
+	nameW = max(10, min(nameW, bw-fixed))
 	now := time.Now()
 	for i := b.top; i < b.top+rows && i < len(items); i++ {
 		it := items[i]
@@ -253,7 +261,10 @@ func (b *browser) view(s *shell, w int) []string {
 			return p.Muted("· " + label)
 		}
 		shown := ui.PadRight(ui.Truncate(name, nameW), nameW)
-		rest := "  " + exp + "   " + flag("lockStatus", "lock") + "  " + flag("privacyProtectionStatus", "privacy")
+		rest := "  " + exp + "   " + flag("lockStatus", "lock")
+		if showPrivacy {
+			rest += "  " + flag("privacyProtectionStatus", "privacy")
+		}
 		if i == b.sel {
 			lines = append(lines, p.BoldFg(ui.Green, "›")+" "+dot+" "+p.BoldFg(ui.Green, shown)+rest)
 		} else {

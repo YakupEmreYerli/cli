@@ -151,7 +151,7 @@ func (s *shell) resultMenu(info map[string]any) *menu {
 			title += p.Muted(" · ") + p.Bold(price) + p.Muted(" / year")
 		}
 		items = []menuItem{
-			{key: "r", label: "Register…", desc: "years, nameservers and contact, then confirm", opens: true, act: func(s *shell) tea.Cmd { s.push(s.registerForm(d, price)); return nil }},
+			{key: "r", label: "Register…", desc: "years, nameservers and contact, then confirm", opens: true, act: func(s *shell) tea.Cmd { return s.openRegister(d, price) }},
 			full,
 		}
 	case "NOTAVAILABLE":
@@ -207,18 +207,17 @@ func (s *shell) renewForm(d string) *form {
 	}).init()
 }
 
-func (s *shell) registerForm(d, price string) *form {
+func (s *shell) registerForm(d, price string, b *contactBook) *form {
 	ns := s.prefs.Nameservers
 	if ns == "" {
 		ns = platformNameservers
 	}
 	f := &form{
 		title: s.p.Bold("Register ") + s.p.BoldFg(ui.Green, d),
-		intro: "The contact handle is used for all four roles (registrant, admin, tech, billing).",
 		fields: []*formField{
 			yearsField("←→ to change"),
 			textField("ns", "Nameservers", ns, platformNameservers, "comma separated; the platform nameservers let you manage DNS here", true),
-			textField("handle", "Contact handle", s.prefs.Handle, "e.g. DNA-12345", "an existing contact handle; create one with `dna contact create`", true),
+			s.contactField(b),
 		},
 		action: "Continue",
 	}
@@ -234,12 +233,30 @@ func (s *shell) registerForm(d, price string) *form {
 		}
 	}
 	f.submit = func(s *shell, v map[string]string) tea.Cmd {
-		s.prefs.Handle, s.prefs.Nameservers = v["handle"], v["ns"]
+		s.prefs.Nameservers = v["ns"]
 		s.savePrefs()
-		if f.note != nil {
-			s.pendingNote = f.note(f)
+		register := func(s *shell, handle string) tea.Cmd {
+			s.unwind()
+			// the first contact chosen becomes the default
+			if c := s.childApp(); s.contacts().def == "" {
+				_ = c.saveContacts(nil, handle)
+			}
+			if f.note != nil {
+				s.pendingNote = f.note(f)
+			}
+			return s.runCommand([]string{"domain", "register", d, "--period", v["years"], "--ns", strings.ReplaceAll(v["ns"], " ", ""), "--handle", handle})
 		}
-		return s.runCommand([]string{"domain", "register", d, "--period", v["years"], "--ns", strings.ReplaceAll(v["ns"], " ", ""), "--handle", v["handle"]})
+		switch v["contact"] {
+		case contactNew:
+			s.push(f) // Esc in the contact form comes back here
+			s.push(s.contactForm(f, register))
+			return nil
+		case contactOther:
+			s.push(f)
+			s.push(s.handleForm(f, register))
+			return nil
+		}
+		return register(s, v["contact"])
 	}
 	return f.init()
 }
@@ -337,8 +354,7 @@ func (s *shell) registerStart() tea.Cmd {
 			d := strings.ToLower(strings.TrimSpace(v["domain"]))
 			return s.checkThen(d, func(s *shell, info map[string]any) tea.Cmd {
 				if st, _ := info["status"].(string); strings.EqualFold(st, "AVAILABLE") {
-					s.push(s.registerForm(d, priceOf(info)))
-					return nil
+					return s.openRegister(d, priceOf(info))
 				}
 				s.push(s.resultMenu(info))
 				return nil

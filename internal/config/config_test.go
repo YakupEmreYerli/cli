@@ -79,3 +79,37 @@ func TestMaskKey(t *testing.T) {
 		t.Error("MaskKey")
 	}
 }
+
+func TestContactBook(t *testing.T) {
+	f, err := Load(filepath.Join(t.TempDir(), "config.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !f.RememberContact("ote", "ote", Contact{Handle: "D-1"}) {
+		t.Fatal("a new contact should change the book")
+	}
+	if !f.RememberContact("ote", "ote", Contact{Handle: "d-1", Name: "Ada Lovelace"}) {
+		t.Error("new details should change the book")
+	}
+	if f.RememberContact("ote", "ote", Contact{Handle: "D-1"}) {
+		t.Error("empty details must not change (or erase) anything")
+	}
+	f.RememberContact("ote", "ote", Contact{Handle: "D-2", Name: "Grace Hopper"})
+	f.SetDefaultContact("ote", "ote", "D-2")
+	cs, def := f.Contacts("ote")
+	if def != "D-2" || len(cs) != 2 || cs[0].Handle != "D-2" || cs[1].Name != "Ada Lovelace" {
+		t.Errorf("contacts = %+v, default %q", cs, def)
+	}
+	if f.Profiles["ote"].Environment != "ote" {
+		t.Errorf("a profile created for contacts keeps its environment: %+v", f.Profiles["ote"])
+	}
+	if !f.ForgetContact("ote", "d-2") || f.ForgetContact("ote", "D-2") {
+		t.Error("forget should remove the handle once")
+	}
+	if _, def := f.Contacts("ote"); def != "" {
+		t.Errorf("forgetting the default clears it, got %q", def)
+	}
+	if cs, _ := f.Contacts("production"); cs != nil {
+		t.Errorf("books are per profile: %+v", cs)
+	}
+}

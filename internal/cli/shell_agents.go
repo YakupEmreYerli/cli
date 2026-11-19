@@ -280,7 +280,13 @@ func (st *agentSetup) view(s *shell, w int) []string {
 		text, _ := l.snippet(a)
 		step := 1
 		say := func(s string) {
-			lines = append(lines, p.Fg(ui.Green, fmt.Sprintf("%d. ", step))+s)
+			for i, l := range wrapCode(s, inner-3) {
+				if i == 0 {
+					lines = append(lines, p.Fg(ui.Green, fmt.Sprintf("%d. ", step))+l)
+				} else {
+					lines = append(lines, "   "+l)
+				}
+			}
 			step++
 		}
 		switch a.Kind {

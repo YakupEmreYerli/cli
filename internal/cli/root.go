@@ -78,6 +78,7 @@ func (a *App) newRootCmd() *cobra.Command {
 		parent := getGroup(path[:len(path)-1])
 		parent.AddCommand(a.newOpCommand(op))
 	}
+	getGroup([]string{"contact"}).AddCommand(a.contactCommands()...)
 
 	for _, c := range []*cobra.Command{
 		a.newAuthCmd(), a.newConfigCmd(), a.newAPICmd(), a.newSchemaCmd(), a.newEnumsCmd(),

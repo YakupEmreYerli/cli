@@ -93,11 +93,14 @@ dna --ote account get
 dna --ote domain search example.com
 dna --ote product tlds --filter-text com
 
-# 3. Bekijk een aankoop vooraf en voer hem daarna uit (er wordt om bevestiging gevraagd)
-dna --ote domain register example.com --ns tr.apiname.com,eu.apiname.com --handle <HANDLE> --dry-run
-dna --ote domain register example.com --ns tr.apiname.com,eu.apiname.com --handle <HANDLE>
+# 3. Maak één keer een contact aan: dna vraagt de gegevens en maakt het je standaardcontact
+dna --ote contact create
 
-# 4. Productie
+# 4. Bekijk een aankoop vooraf en voer hem daarna uit (er wordt om bevestiging gevraagd)
+dna --ote domain register example.com --dry-run
+dna --ote domain register example.com
+
+# 5. Productie
 dna auth login
 dna domain list
 ```

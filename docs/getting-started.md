@@ -59,26 +59,44 @@ Nothing here changes anything. If you want a guarantee, add `--read-only`.
 
 ## 5. Register a domain
 
-Registering needs contact handles. Create one (it can be used for all four roles):
+Registering needs a contact handle (one handle can serve all four roles: registrant, admin, tech, billing).
+Create one once; dna asks for each detail and saves the handle as your default contact:
+
+```bash
+dna --ote contact create
+#   First name: Ada
+#   Phone, with country code: +90 555 123 45 67
+#   Country (2 letters) [TR]:            <- taken from +90
+#   ...
+# ✓ Saved D-123456789 as your default contact
+```
+
+The same works with flags (for scripts). `--phone` takes the full number, so `--phone-country-code` and
+`--country` can be left out when the calling code belongs to one country:
 
 ```bash
 dna --ote contact create --first-name Ada --last-name Lovelace --email ada@example.com \
-  --address "1 Example Street" --city Istanbul --state Istanbul --country TR --postal-code 34000 \
-  --phone-country-code 90 --phone 5551234567
-# -> {"handle":"DNA-12345", ...}
+  --phone "+90 555 123 45 67" --address "1 Example Street" --city Istanbul --state Istanbul --postal-code 34000
 ```
 
-Preview, then register:
+Already have handles on your domains? `dna --ote contact list --scan` finds them, and
+`dna --ote contact default <handle>` picks the default.
+
+Preview, then register. Without `--handle` dna uses your default contact for all four roles, and without `--ns` the
+platform nameservers (tr.apiname.com, eu.apiname.com):
 
 ```bash
-dna --ote domain register my-test-domain.com --period 1 \
-  --ns ns1.example.net --ns ns2.example.net --handle DNA-12345 --dry-run
+dna --ote domain register my-test-domain.com --period 1 --dry-run
 
-dna --ote domain register my-test-domain.com --period 1 \
-  --ns ns1.example.net --ns ns2.example.net --handle DNA-12345
+dna --ote domain register my-test-domain.com --period 1
+# Contact: D-123456789 (Ada Lovelace) for all four roles, your default contact. --handle picks another.
 # BILLABLE: Register a domain ... on OTE
 # Continue? [y/N]
 ```
+
+Another contact for one domain: `--handle D-987654321` (all roles) or `--handle Registrant=D-1 --handle Admin=D-2 …`.
+With no contact at all, dna asks at the terminal whether to create one, find the ones on your domains or use a handle
+you type; scripts and agents get exit code 2 with these options instead.
 
 Registration is **billable**. On a terminal `dna` asks for confirmation; in scripts pass `--yes`.
 

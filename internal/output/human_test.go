@@ -113,3 +113,10 @@ func TestMoney(t *testing.T) {
 		}
 	}
 }
+
+func TestSuccessCardWithStatusOnly(t *testing.T) {
+	out := render(t, `{"success":true,"message":"Domain registration successful","status":"Active","domainId":"x"}`, Options{Format: Table})
+	if !strings.Contains(out, "✓ Domain registration successful  ·  ● Active\n") {
+		t.Errorf("headline spacing:\n%q", out)
+	}
+}

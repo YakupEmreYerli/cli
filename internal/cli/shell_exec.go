@@ -152,6 +152,10 @@ func init() {
 			return s.start([]string{"dns", "list", d}, "Reading the zone of "+d, runOpts{})
 		})},
 		{"/renew", "<domain>", "Renew a domain (asks for the years, then confirms)", withDomain("Renew…", func(s *shell, d string) tea.Cmd { s.push(s.renewForm(d)); return nil })},
+		{"/contact", "", "Create a contact handle in a short form (saved for registrations)", func(s *shell, _ string) tea.Cmd { s.push(s.contactForm(nil, nil)); return nil }},
+		{"/contacts", "", "The contact handles dna knows, the default first", func(s *shell, _ string) tea.Cmd {
+			return s.start([]string{"contact", "list"}, "Reading your contacts", runOpts{})
+		}},
 		{"/balance", "", "Balance and reseller account", func(s *shell, _ string) tea.Cmd {
 			return s.start([]string{"account", "get"}, "Counting your balance", runOpts{})
 		}},
@@ -446,9 +450,9 @@ func (c *confirmBox) view(s *shell, w int) []string {
 	safety, _ := c.plan["safety"].(string)
 	env, _ := c.plan["environment"].(string)
 	req, _ := c.plan["request"].(map[string]any)
-	border, badge, what := ui.Amber, p.Badge(ui.Amber, "BILLABLE"), "This charges your balance."
+	border, badge, what := ui.Amber, p.Badge(ui.Amber, "BILLABLE"), "This charges your balance"
 	if safety == string(ops.Destructive) {
-		border, badge, what = ui.Red, p.Badge(ui.Red, "DESTRUCTIVE"), "This deletes data or is hard to undo."
+		border, badge, what = ui.Red, p.Badge(ui.Red, "DESTRUCTIVE"), "This deletes data or is hard to undo"
 	}
 	title := "Confirm"
 	if c.op != nil {
@@ -466,13 +470,7 @@ func (c *confirmBox) view(s *shell, w int) []string {
 		}
 		sort.Strings(keys)
 		for _, k := range keys {
-			var val string
-			if str, ok := body[k].(string); ok {
-				val = str
-			} else {
-				b, _ := json.Marshal(body[k])
-				val = string(b)
-			}
+			val := confirmValue(body[k])
 			lines = append(lines, p.Muted(ui.PadRight(k, kw))+"  "+p.Bold(ui.Truncate(val, max(10, min(w, 90)-kw-10))))
 		}
 		lines = append(lines, "")
@@ -489,7 +487,7 @@ func (c *confirmBox) view(s *shell, w int) []string {
 	if !strings.EqualFold(env, "ote") {
 		envText = p.BoldFg(ui.Red, "PRODUCTION")
 	}
-	lines = append(lines, what+" "+p.Muted("on")+" "+envText, p.Muted(method+" "+target))
+	lines = append(lines, what+" "+p.Muted("on")+" "+envText+".", p.Muted(method+" "+target))
 	if !strings.EqualFold(env, "ote") && safety == string(ops.Billable) {
 		lines = append(lines, p.Fg(ui.Red, "Real money: your balance is charged right away."))
 	}
@@ -502,6 +500,47 @@ func (c *confirmBox) view(s *shell, w int) []string {
 	lines = append(lines, "", buttons)
 	box := p.Box(lines, min(w, 90), border, badge+" "+p.Muted("needs your OK"))
 	return append(box, s.hint("←→ choose · enter confirm the choice · y "+strings.ToLower(c.actWord)+" · n / esc cancel"))
+}
+
+// confirmValue shows a request value the way a person reads it: lists
+// joined with commas, contact handles by role, anything else as JSON.
+func confirmValue(v any) string {
+	switch x := v.(type) {
+	case string:
+		return x
+	case []any:
+		var parts []string
+		handles := map[string][]string{}
+		var order []string
+		for _, item := range x {
+			switch it := item.(type) {
+			case string:
+				parts = append(parts, it)
+			case map[string]any:
+				h, _ := it["handle"].(string)
+				role, _ := it["contactType"].(string)
+				if h == "" {
+					b, _ := json.Marshal(it)
+					parts = append(parts, string(b))
+					continue
+				}
+				if _, seen := handles[h]; !seen {
+					order = append(order, h)
+				}
+				handles[h] = append(handles[h], role)
+			}
+		}
+		for _, h := range order {
+			if len(handles[h]) == 4 {
+				parts = append(parts, h+" (all roles)")
+			} else {
+				parts = append(parts, h+" ("+strings.Join(handles[h], ", ")+")")
+			}
+		}
+		return strings.Join(parts, ", ")
+	}
+	b, _ := json.Marshal(v)
+	return string(b)
 }
 
 // ---------------------------------------------------------------- help
