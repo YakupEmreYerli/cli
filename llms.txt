@@ -1,0 +1,29 @@
+# dna — DomainNameAPI CLI
+
+> dna is the command line client and MCP server for the DomainNameAPI reseller REST API
+> (https://api.domainresellerapi.com, test environment https://ote.domainresellerapi.com). It searches, registers,
+> renews and transfers domains and manages DNS records, DNSSEC, contacts, SSL certificates and hosting. Output is JSON
+> when piped, errors are JSON with stable exit codes, and billable or destructive commands require explicit
+> confirmation (--yes, or confirm=true over MCP).
+
+Run `dna agent guide` for a version-matched usage guide and `dna schema <operation>` for the JSON Schema of any input.
+
+## Docs
+
+- [README](https://github.com/domainreseller/cli/blob/main/README.md): install, quick start, safety model
+- [Getting started](https://github.com/domainreseller/cli/blob/main/docs/getting-started.md): OTE login, first registration and DNS change
+- [Configuration](https://github.com/domainreseller/cli/blob/main/docs/configuration.md): credentials, environments, profiles, environment variables
+- [Usage](https://github.com/domainreseller/cli/blob/main/docs/usage.md): inputs, --body, output formats, --jq, pagination, rate limits
+- [AI agents and MCP](https://github.com/domainreseller/cli/blob/main/docs/ai-agents.md): MCP setup per client, confirmation protocol, skill
+- [Errors and exit codes](https://github.com/domainreseller/cli/blob/main/docs/errors.md)
+
+## Reference
+
+- [Command reference](https://github.com/domainreseller/cli/blob/main/docs/reference/README.md): every command, flags, safety class, API route
+- [Enums](https://github.com/domainreseller/cli/blob/main/docs/enums.md): meaning of numeric status/type codes
+- [Agent skill](https://github.com/domainreseller/cli/blob/main/skills/dna/SKILL.md)
+
+## Optional
+
+- [Architecture](https://github.com/domainreseller/cli/blob/main/docs/architecture.md)
+- [OpenAPI document](https://github.com/domainreseller/cli/blob/main/internal/openapi/openapi.json)

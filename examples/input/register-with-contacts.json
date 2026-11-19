@@ -1,0 +1,11 @@
+{
+  "domainName": "example.com",
+  "period": 1,
+  "nameServers": ["ns1.example.net", "ns2.example.net"],
+  "contacts": [
+    {"contactType": "Registrant", "firstName": "Ada", "lastName": "Lovelace", "companyName": "Example Ltd", "eMail": "ada@example.com", "address": "1 Example Street", "city": "Istanbul", "state": "Istanbul", "postalCode": "34000", "country": "TR", "phoneCountryCode": "90", "phone": "5551234567"},
+    {"contactType": "Admin", "firstName": "Ada", "lastName": "Lovelace", "companyName": "Example Ltd", "eMail": "ada@example.com", "address": "1 Example Street", "city": "Istanbul", "state": "Istanbul", "postalCode": "34000", "country": "TR", "phoneCountryCode": "90", "phone": "5551234567"},
+    {"contactType": "Tech", "firstName": "Ada", "lastName": "Lovelace", "companyName": "Example Ltd", "eMail": "ada@example.com", "address": "1 Example Street", "city": "Istanbul", "state": "Istanbul", "postalCode": "34000", "country": "TR", "phoneCountryCode": "90", "phone": "5551234567"},
+    {"contactType": "Billing", "firstName": "Ada", "lastName": "Lovelace", "companyName": "Example Ltd", "eMail": "ada@example.com", "address": "1 Example Street", "city": "Istanbul", "state": "Istanbul", "postalCode": "34000", "country": "TR", "phoneCountryCode": "90", "phone": "5551234567"}
+  ]
+}

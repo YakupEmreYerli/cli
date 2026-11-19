@@ -1,0 +1,13 @@
+{
+  "firstName": "Ada",
+  "lastName": "Lovelace",
+  "companyName": "Example Ltd",
+  "eMail": "ada@example.com",
+  "address": "1 Example Street",
+  "city": "Istanbul",
+  "state": "Istanbul",
+  "postalCode": "34000",
+  "country": "TR",
+  "phoneCountryCode": "90",
+  "phone": "5551234567"
+}
