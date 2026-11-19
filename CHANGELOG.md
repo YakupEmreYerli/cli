@@ -5,8 +5,30 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-20
+
+### Added
+
+- A contact book per profile, so registering no longer means hunting for handles:
+  - `domain register` without `--handle` uses the default contact for all four roles, and the platform nameservers
+    without `--ns`. At a terminal with no default contact, dna offers to create one on the spot, find the ones on your
+    domains or check a typed handle. Scripts and agents get exit code 2 with these options.
+  - `contact create` asks for the details you leave out at a terminal, and `--phone` takes the full number
+    (`+90 555 123 45 67`): the calling code is split off and the country filled in. The new handle is saved, and becomes
+    the default when there is none.
+  - New `contact list [--scan]`, `contact default [handle]` and `contact forget <handle>`. `domain info` and
+    `contact get` also save the handles they show.
+  - Shell: the registration form's Contact field lists the saved contacts (Enter opens a searchable list) plus
+    "New contact…" and "Another handle…". With an empty book it reads a few domains in the background. New `/contact`
+    and `/contacts`.
+
 ### Fixed
 
+- Shell: live search waited only 20 seconds, so on OTE (which can take about 50 seconds when a registry does not answer)
+  it never showed results. It now waits up to 90 seconds.
+- Shell: extensions whose registry did not answer were shown as "not offered"; they now read "no answer".
+- Shell: narrow terminals no longer wrap or cut lines (welcome box, status line, forms, domain browser), long menu
+  labels no longer push the descriptions off, and the registration result lost a stray gap.
 - The install scripts can update dna while it is running (for example as an MCP server started by Claude, Cursor or another AI app). On Windows the running `dna.exe` is renamed out of the way instead of failing with "the file is being used by another process"; on Linux and macOS the new binary is renamed over the old one instead of failing with "Text file busy".
 
 ## [1.1.0] - 2026-11-19
