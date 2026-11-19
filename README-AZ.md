@@ -102,11 +102,32 @@ dna auth login
 dna domain list
 ```
 
+<a id="interactive-shell"></a>
+
+## <img src="./assets/h-shell.svg" width="30" height="30" alt=""> Sadəcə `dna` yazın: interaktiv shell
+
+<img src="./assets/az/shell.svg" width="1200" alt="dna interaktiv shell: acme yazanda boş uzantılar qiymətləri ilə görünür, istifadəçi acme.net-i seçir, qısa qeydiyyat formasını doldurur, ödənişli addımı təsdiq pəncərəsində təsdiqləyir və domen qeydiyyatdan keçir.">
+
+Terminalda `dna`-nı tək başına işə salın. Heç bir əmri bilməyinizə ehtiyac yoxdur: hər şey ↑↓ və Enter ilə seçilir, Esc isə həmişə bir addım geri qaytarır.
+
+|  | Nə əldə edirsiniz |
+|---|---|
+| 🔎 **Canlı axtarış** | `acme` kimi bir ad yazın: boş uzantılar və qiymətləri siz yazarkən görünür. ↓ ilə birini seçib qısa forma ilə qeydiyyatdan keçirirsiniz. |
+| ⚡ **Sürətli əməliyyatlar** | Boş sətirdə ↓: domenləriniz, domen qeydiyyatı, DNS qeydləri, balans, OTE ilə production arasında keçid. |
+| 🗂️ **Domen menyuları** | Domenlərinizdə axtarın və Enter basın: təfərrüatlar, DNS, yeniləmə, kilid, WHOIS məxfiliyi, nameserver-lər, auth kodu. |
+| 🛡️ **Təsadüfən heç nə olmur** | Hər ödənişli və ya dağıdıcı addım dəqiq sorğunu və qiyməti göstərən təsdiq pəncərəsi ilə bitir. Siz başqasını seçməyincə Ləğv seçili qalır. |
+| 🤖 **AI agentini qoşun** | `/agent` 20-dən çox agenti göstərir: Claude Code, ChatGPT, Cursor, Claude Desktop, Codex və digərləri. dna quraşdırmanı edir, giriş məlumatlarını yoxlayır və hazır promptlar verir. |
+
+Skriptlər və AI agentləri shell-i heç vaxt görmür: pipe ilə və ya agent tərəfindən işə salındıqda `dna` əvvəlki kimi JSON və kömək mətni çıxarır.
+
 <a id="connect-your-ai-agent"></a>
 
 ## <img src="./assets/h-mcp.svg" width="30" height="30" alt=""> AI agentinizi qoşun
 
 <img src="./assets/az/mcp.svg" width="1200" alt="Model Context Protocol: dna mcp serve təhlükəsizlik annotasiyaları ilə 65 alət təqdim edir. confirm olmadan ödənişli alət çağırışı önizləmə qaytarır; təsdiqdən sonra confirm=true ilə icra olunur.">
+
+> [!TIP]
+> **Ən sürətli yol:** `dna`-nı işə salın, ↓ basın və **Connect an AI agent** seçin (və ya `/agent` yazın). 20-dən çox agentdən birini, OTE və ya production mühitini və agentin nə qədər səlahiyyətli olacağını seçin. dna quraşdırmanı icra edir və ya özünü agentin konfiqurasiya faylına əlavə edir, giriş məlumatlarını yoxlayır və hazır promptları sizin üçün kopyalayır.
 
 ```bash
 claude mcp add dna -- dna mcp serve --env ote      # Claude Code
@@ -313,6 +334,7 @@ Xətalar stderr-də JSON formatında verilir: `{"error":{"kind","code","message"
 
 | qrup | nə edir |
 |---|---|
+| `dna` | interaktiv shell: canlı axtarış, menyular, addım-addım formalar, AI agent quraşdırması |
 | `dna domain` | axtarış, toplu axtarış, siyahı, məlumat, qeydiyyat, yenilənmə, transfer, bərpa, kilid, məxfilik, auth kodu, əlaqələr, sənədlər, yönləndirmə, nameserver-lər, child host-lar |
 | `dna dns` · `dna dnssec` | zona qeydləri, DS qeydləri |
 | `dna contact` | əlaqə handle-ları və doğrulama |

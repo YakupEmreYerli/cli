@@ -102,11 +102,32 @@ dna auth login
 dna domain list
 ```
 
+<a id="interactive-shell"></a>
+
+## <img src="./assets/h-shell.svg" width="30" height="30" alt=""> Typ gewoon `dna`: de interactieve shell
+
+<img src="./assets/nl/shell.svg" width="1200" alt="De interactieve shell van dna: bij het typen van acme verschijnen de vrije extensies met prijzen, de gebruiker kiest acme.net, vult een kort registratieformulier in, bevestigt de betaalde stap in een bevestigingsvenster en het domein wordt geregistreerd.">
+
+Start `dna` zonder argumenten in een terminal. Je hoeft geen enkel commando te kennen: alles kies je met ↑↓ en Enter, en Esc gaat altijd één stap terug.
+
+|  | Wat je krijgt |
+|---|---|
+| 🔎 **Live zoeken** | Typ een naam zoals `acme`: vrije extensies en hun prijzen verschijnen terwijl je typt. Met ↓ kies je er een en registreer je die via een kort formulier. |
+| ⚡ **Snelle acties** | ↓ op een lege regel: je domeinen, een domein registreren, DNS-records, saldo, wisselen tussen OTE en productie. |
+| 🗂️ **Domeinmenu’s** | Zoek in je domeinen en druk op Enter: details, DNS, verlengen, vergrendeling, WHOIS-privacy, nameservers, autorisatiecode. |
+| 🛡️ **Niets per ongeluk** | Elke betaalde of destructieve stap eindigt in een bevestigingsvenster met het exacte verzoek en de prijs. Annuleren blijft geselecteerd tot je iets anders kiest. |
+| 🤖 **Een AI-agent koppelen** | `/agent` toont meer dan 20 agents: Claude Code, ChatGPT, Cursor, Claude Desktop, Codex en meer. dna richt hem in, controleert de inloggegevens en geeft je kant-en-klare prompts. |
+
+Scripts en AI-agents zien de shell nooit: via een pipe of gestart door een agent geeft `dna` net als voorheen JSON en de help.
+
 <a id="connect-your-ai-agent"></a>
 
 ## <img src="./assets/h-mcp.svg" width="30" height="30" alt=""> Verbind je AI-agent
 
 <img src="./assets/nl/mcp.svg" width="1200" alt="Model Context Protocol: dna mcp serve biedt 65 tools met veiligheidsannotaties. Een factureerbare tool-aanroep zonder confirm geeft een voorbeeld terug; met confirm=true na goedkeuring wordt hij uitgevoerd.">
+
+> [!TIP]
+> **De snelste weg:** start `dna`, druk op ↓ en kies **Connect an AI agent** (of typ `/agent`). Kies een van de meer dan 20 agents, OTE of productie en hoeveel hij mag doen. dna voert de installatie uit of voegt zichzelf toe aan het configuratiebestand van de agent, controleert de inloggegevens en kopieert kant-en-klare prompts voor je.
 
 ```bash
 claude mcp add dna -- dna mcp serve --env ote      # Claude Code
@@ -315,6 +336,7 @@ Fouten worden als JSON naar stderr geschreven: `{"error":{"kind","code","message
 
 | groep | wat het doet |
 |---|---|
+| `dna` | de interactieve shell: live zoeken, menu’s, begeleide formulieren, AI-agents koppelen |
 | `dna domain` | zoeken, bulkzoeken, lijst, info, registreren, verlengen, verhuizen, herstellen, vergrendelen, privacy, authcode, contacten, documenten, doorsturen, nameservers, child hosts |
 | `dna dns` · `dna dnssec` | zonerecords, DS-records |
 | `dna contact` | contacthandles en verificatie |

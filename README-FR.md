@@ -102,11 +102,32 @@ dna auth login
 dna domain list
 ```
 
+<a id="interactive-shell"></a>
+
+## <img src="./assets/h-shell.svg" width="30" height="30" alt=""> Tapez simplement `dna` : le shell interactif
+
+<img src="./assets/fr/shell.svg" width="1200" alt="Le shell interactif de dna : en tapant acme, les extensions libres s’affichent avec leurs prix, l’utilisateur choisit acme.net, remplit un court formulaire d’enregistrement, confirme l’étape payante dans une boîte de confirmation et le domaine est enregistré.">
+
+Lancez `dna` seul dans un terminal. Inutile de connaître la moindre commande : tout se choisit avec ↑↓ et Entrée, et Échap revient toujours d’une étape.
+
+|  | Ce que vous obtenez |
+|---|---|
+| 🔎 **Recherche en direct** | Tapez un nom comme `acme` : les extensions libres et leurs prix s’affichent pendant la saisie. ↓ en choisit une et l’enregistre via un court formulaire. |
+| ⚡ **Actions rapides** | ↓ sur une ligne vide : vos domaines, enregistrer un domaine, enregistrements DNS, solde, passage entre OTE et production. |
+| 🗂️ **Menus de domaine** | Cherchez dans vos domaines et appuyez sur Entrée : détails, DNS, renouvellement, verrouillage, confidentialité WHOIS, serveurs de noms, code d’autorisation. |
+| 🛡️ **Rien par accident** | Chaque étape payante ou destructrice se termine par une boîte de confirmation avec la requête exacte et le prix. Annuler reste sélectionné tant que vous ne choisissez pas autre chose. |
+| 🤖 **Connecter un agent IA** | `/agent` propose plus de 20 agents : Claude Code, ChatGPT, Cursor, Claude Desktop, Codex et d’autres. dna le configure, vérifie les identifiants et vous donne des prompts prêts à l’emploi. |
+
+Les scripts et les agents IA ne voient jamais le shell : redirigé ou lancé par un agent, `dna` affiche du JSON et l’aide exactement comme avant.
+
 <a id="connect-your-ai-agent"></a>
 
 ## <img src="./assets/h-mcp.svg" width="30" height="30" alt=""> Connectez votre agent IA
 
 <img src="./assets/fr/mcp.svg" width="1200" alt="Model Context Protocol : dna mcp serve expose 65 outils avec des annotations de sécurité. Un appel d'outil facturable sans confirmation renvoie un aperçu ; avec confirm=true après approbation, il s'exécute.">
+
+> [!TIP]
+> **Le plus rapide :** lancez `dna`, appuyez sur ↓ et choisissez **Connect an AI agent** (ou tapez `/agent`). Choisissez l’un des plus de 20 agents, OTE ou production et ce qu’il a le droit de faire. dna lance la configuration ou s’ajoute au fichier de configuration de l’agent, vérifie les identifiants et copie pour vous des prompts prêts à l’emploi.
 
 ```bash
 claude mcp add dna -- dna mcp serve --env ote      # Claude Code
@@ -316,6 +337,7 @@ Les erreurs sont renvoyées en JSON sur stderr : `{"error":{"kind","code","messa
 
 | groupe | rôle |
 |---|---|
+| `dna` | le shell interactif : recherche en direct, menus, formulaires guidés, configuration des agents IA |
 | `dna domain` | recherche, recherche groupée, liste, informations, enregistrement, renouvellement, transfert, restauration, verrouillage, confidentialité, code d'autorisation, contacts, documents, redirection, serveurs de noms, hôtes enfants |
 | `dna dns` · `dna dnssec` | enregistrements de zone, enregistrements DS |
 | `dna contact` | handles de contact et vérification |

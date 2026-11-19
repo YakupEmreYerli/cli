@@ -102,11 +102,32 @@ dna auth login
 dna domain list
 ```
 
+<a id="interactive-shell"></a>
+
+## <img src="./assets/h-shell.svg" width="30" height="30" alt=""> Basta digitare `dna`: la shell interattiva
+
+<img src="./assets/it/shell.svg" width="1200" alt="La shell interattiva di dna: digitando acme compaiono le estensioni libere con i prezzi, l'utente sceglie acme.net, compila un breve modulo di registrazione, conferma il passaggio a pagamento in una finestra di conferma e il dominio viene registrato.">
+
+Avvia `dna` da solo in un terminale. Non serve conoscere nessun comando: tutto si sceglie con ↑↓ e Invio, ed Esc torna sempre indietro di un passo.
+
+|  | Cosa ottieni |
+|---|---|
+| 🔎 **Ricerca live** | Digita un nome come `acme`: le estensioni libere e i loro prezzi compaiono mentre scrivi. Con ↓ ne scegli una e la registri con un breve modulo. |
+| ⚡ **Azioni rapide** | ↓ su una riga vuota: i tuoi domini, registra un dominio, record DNS, saldo, passaggio tra OTE e produzione. |
+| 🗂️ **Menu dei domini** | Cerca tra i tuoi domini e premi Invio: dettagli, DNS, rinnovo, blocco, privacy WHOIS, nameserver, codice di autorizzazione. |
+| 🛡️ **Niente per sbaglio** | Ogni passaggio a pagamento o distruttivo termina in una finestra di conferma con la richiesta esatta e il prezzo. Annulla resta selezionato finché non scegli altrimenti. |
+| 🤖 **Collega un agente IA** | `/agent` elenca oltre 20 agenti: Claude Code, ChatGPT, Cursor, Claude Desktop, Codex e altri. dna lo configura, verifica le credenziali e ti fornisce prompt pronti all'uso. |
+
+Script e agenti IA non vedono mai la shell: in una pipe o avviato da un agente, `dna` stampa JSON e l'aiuto esattamente come prima.
+
 <a id="connect-your-ai-agent"></a>
 
 ## <img src="./assets/h-mcp.svg" width="30" height="30" alt=""> Collega il tuo agente AI
 
 <img src="./assets/it/mcp.svg" width="1200" alt="Model Context Protocol: dna mcp serve espone 65 strumenti con annotazioni di sicurezza. Una chiamata a uno strumento a pagamento senza conferma restituisce un'anteprima; con confirm=true, dopo l'approvazione, viene eseguita.">
+
+> [!TIP]
+> **Il modo più rapido:** avvia `dna`, premi ↓ e scegli **Connect an AI agent** (oppure digita `/agent`). Scegli uno degli oltre 20 agenti, OTE o produzione e quanto può fare. dna esegue la configurazione o si aggiunge al file di configurazione dell'agente, verifica le credenziali e copia per te i prompt pronti all'uso.
 
 ```bash
 claude mcp add dna -- dna mcp serve --env ote      # Claude Code
@@ -315,6 +336,7 @@ Gli errori vengono restituiti in JSON su stderr: `{"error":{"kind","code","messa
 
 | gruppo | cosa fa |
 |---|---|
+| `dna` | la shell interattiva: ricerca live, menu, moduli guidati, configurazione degli agenti IA |
 | `dna domain` | ricerca, ricerca multipla, elenco, informazioni, registrazione, rinnovo, trasferimento, ripristino, blocco, privacy, codice di autorizzazione, contatti, documenti, inoltro, nameserver, host figli |
 | `dna dns` · `dna dnssec` | record della zona, record DS |
 | `dna contact` | handle dei contatti e verifica |

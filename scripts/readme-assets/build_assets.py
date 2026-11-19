@@ -395,6 +395,208 @@ def mcp(lang):
     return write(lang, 'mcp.svg', s)
 
 
+# --------------------------------------------------------------------------- shell
+
+# Calvin S letters (3 rows), the compact logo the shell shows on narrow terminals.
+SMALL_GLYPHS = {
+    'D': ('╔╦╗', ' ║║', '═╩╝'), 'o': ('┌─┐', '│ │', '└─┘'), 'm': ('┌┬┐', '│││', '┴ ┴'), 'a': ('┌─┐', '├─┤', '┴ ┴'),
+    'i': ('┬', '│', '┴'), 'n': ('┌┐┌', '│││', '┘└┘'), 'N': ('╔╗╔', '║║║', '╝╚╝'), 'e': ('┌─┐', '├┤ ', '└─┘'),
+    'A': ('╔═╗', '╠═╣', '╩ ╩'), 'P': ('╔═╗', '╠═╝', '╩  '), 'I': ('╦', '║', '╩'), ' ': ('  ', '  ', '  '),
+}
+
+
+def shell(lang):
+    """The interactive shell: live search, a result menu, the registration
+    form, the confirmation box and the result. The terminal shows the real
+    (English) interface; the left column is translated."""
+    t = lang.t
+    W, H, T = 1200, 540, 17.0
+    s = SVG(W, H, t['sh_aria'])
+    s.deff(COMMON_DEFS)
+    s.style(BASE_CSS)
+    s.add(f'<rect x="1" y="1" width="{W - 2}" height="{H - 2}" rx="28" fill="url(#hb)" stroke="{LINE}" stroke-width="2"/>')
+    s.add(f'<rect x="1" y="1" width="{W - 2}" height="{H - 2}" rx="28" fill="url(#dots)"/>')
+    s.add('<g class="fl"><circle cx="1080" cy="80" r="220" fill="url(#gG)"/></g>')
+    s.add('<g class="fl2"><circle cx="160" cy="520" r="220" fill="url(#gC)"/></g>')
+
+    # ---- left column (translated)
+    L, MAXW = 56, 500
+    rtl = lang.rtl
+
+    def col(y, text, cls, size, fill):
+        if rtl:
+            return s.text(L + MAXW, y, text, cls, size, fill, anchor='start', rtl=True)
+        return s.text(L, y, text, cls, size, fill)
+
+    bsz = fit(lang.S, t['sh_badge'], 13, MAXW - 48)
+    bw = width(lang.S, t['sh_badge'], bsz) + 48
+    bx = L + MAXW - bw if rtl else L
+    s.add(f'<rect x="{fmt(bx)}" y="60" width="{fmt(bw)}" height="32" rx="16" fill="#FFFFFF" stroke="#B5F0E1" stroke-width="1.5"/>')
+    s.add(f'<circle cx="{fmt(bx + 18)}" cy="76" r="4.5" fill="{GREEN}" class="ping"/><circle cx="{fmt(bx + 18)}" cy="76" r="4.5" fill="{GREEN}"/>')
+    s.add(s.text(bx + 32, 80.5, t['sh_badge'], lang.S, bsz, GREEN_D, rtl=rtl))
+
+    size = 46
+    while max(width(lang.X, t['sh_t1'], size), width(lang.X, t['sh_t2'], size)) > MAXW:
+        size -= 0.5
+    s.add(col(156, t['sh_t1'], lang.X, size, INK))
+    s.add(col(156 + size * 1.2, t['sh_t2'], lang.X, size, 'url(#ag)'))
+    ssz = 16.5
+    while max(width(lang.N, x, ssz) for x in t['sh_sub']) > MAXW:
+        ssz -= 0.25
+    y = 156 + size * 1.2 + 44
+    for line in t['sh_sub']:
+        s.add(col(y, line, lang.N, ssz, MUTED))
+        y += ssz * 1.6
+    colors = [GREEN, CYAN_D, PURPLE, GREEN_D, AMBER, RED]
+    csz = 13
+    while sum(width(lang.S, c, csz) + 50 for c in t['sh_chips']) > 2 * MAXW + 40 and csz > 10:
+        csz -= 0.25
+    cx, cy = L, y + 10
+    for i, (label, color) in enumerate(zip(t['sh_chips'], colors)):
+        cw = width(lang.S, label, csz) + 40
+        if cx + cw > L + MAXW:
+            cx, cy = L, cy + 44
+        s.add(f'<g class="bob" style="animation-delay:{i * 0.35:.2f}s">'
+              f'<rect x="{fmt(cx)}" y="{fmt(cy)}" width="{fmt(cw)}" height="32" rx="10" fill="#FFFFFF" stroke="{LINE}" stroke-width="1.5"/>'
+              f'<circle cx="{fmt(cx + 17)}" cy="{fmt(cy + 16)}" r="4" fill="{color}"/>'
+              + s.text(cx + 28, cy + 20.5, label, lang.S, csz, INK, rtl=rtl) + '</g>')
+        cx += cw + 10
+    by = cy + 62
+    cmd = 'dna'
+    s.add(f'<rect x="{L}" y="{fmt(by)}" width="{MAXW}" height="52" rx="14" fill="{TERM}"/>')
+    s.add(s.text(L + 22, by + 31, '$', 'B', 15, GREEN))
+    s.add(s.text(L + 40, by + 31, cmd, 'R', 15, TERM_TXT))
+    s.add(f'<rect x="{fmt(L + 44 + width("R", cmd, 15))}" y="{fmt(by + 17)}" width="9" height="18" fill="{GREEN}" class="bl"/>')
+
+    # ---- terminal (the real, English interface)
+    tx, ty, tw, th = 600, 40, 564, 460
+    s.add(f'<g class="bob" style="animation-duration:6s">'
+          f'<rect x="{tx}" y="{ty + 8}" width="{tw}" height="{th}" rx="18" fill="{INK}" fill-opacity=".12"/>'
+          f'<rect x="{tx}" y="{ty}" width="{tw}" height="{th}" rx="18" fill="{TERM}"/>'
+          f'<path d="M{tx} {ty + 40}V{ty + 18}a18 18 0 0 1 18-18h{tw - 36}a18 18 0 0 1 18 18v22z" fill="{TERM_BAR}"/>'
+          f'<circle cx="{tx + 22}" cy="{ty + 20}" r="6" fill="#FF5F57"/><circle cx="{tx + 42}" cy="{ty + 20}" r="6" fill="#FEBC2E"/><circle cx="{tx + 62}" cy="{ty + 20}" r="6" fill="#28C840"/>'
+          + s.text(tx + tw / 2, ty + 24.5, t['sh_term'], lang.chat, 12, TERM_DIM, anchor='middle', rtl=rtl))
+    x0 = tx + 24
+    win_n = [0]
+
+    def win(a, b):
+        """A class that shows an element from a to b seconds (fading)."""
+        i = win_n[0]
+        win_n[0] += 1
+        s.style(f'.w{i}{{animation:w{i} {T}s linear infinite}}@keyframes w{i}{{0%,{pct(a, T)}{{opacity:0}}'
+                f'{pct(a + 0.2, T)},{pct(b, T)}{{opacity:1}}{pct(b + 0.2, T)},100%{{opacity:0}}}}')
+        return f'w{i}'
+
+    def txt(x, y, text, color=TERM_TXT, cls='R', size=12.5, anchor=None):
+        return s.text(x, y, text, cls, size, color, anchor=anchor)
+
+    # logo
+    y = ty + 68
+    for row in range(3):
+        dom = ''.join(SMALL_GLYPHS[c][row] for c in 'Domain')
+        rest = ''.join(SMALL_GLYPHS[c][row] for c in ' Name API')
+        s.add(txt(x0, y, dom, '#FFFFFF', 'B', 13) + txt(x0 + width('B', dom, 13), y, rest, GREEN, 'B', 13))
+        y += 15
+    s.add(txt(x0, ty + 126, 'Domains, DNS, SSL and hosting from your terminal  ·  v1.1.0', TERM_DIM, 'R', 11))
+
+    # prompt with "acme" typed
+    iy = ty + 142
+    s.add(f'<rect x="{x0 - 6}" y="{iy}" width="{tw - 36}" height="34" rx="9" fill="none" stroke="{GREEN_D}" stroke-width="1.5"/>')
+    s.add(txt(x0 + 6, iy + 22, '›', GREEN, 'B', 14))
+    typed = 'acme'
+    tw_ = width('R', typed, 13)
+    s.deff(f'<clipPath id="ty"><rect class="tq" x="{fmt(x0 + 22)}" y="{iy + 6}" width="{fmt(tw_ + 4)}" height="22"/></clipPath>')
+    s.style(f'.tq{{animation:tq {T}s steps(4,end) infinite}}@keyframes tq{{0%,{pct(0.9, T)}{{transform:translateX(-{fmt(tw_ + 4)}px)}}'
+            f'{pct(1.7, T)},96%{{transform:none}}97%,100%{{transform:translateX(-{fmt(tw_ + 4)}px)}}}}')
+    s.add(f'<g clip-path="url(#ty)">' + txt(x0 + 22, iy + 22, typed, TERM_TXT, 'R', 13) + '</g>')
+
+    cy0 = ty + 204
+    # A. live results
+    k = win(2.3, 5.4)
+    rows = [('×', 'acme.com', 'taken', TERM_DIM), ('✓', 'acme.net', '11.49 USD / year', GREEN),
+            ('✓', 'acme.io', '39.00 USD / year', GREEN), ('✓', 'acme.app', '15.00 USD / year', GREEN)]
+    g = [f'<g class="{k}">', txt(x0, cy0, 'live · acme · 3 free of 4', TERM_DIM, 'R', 11.5)]
+    for i, (mark, name, info, color) in enumerate(rows):
+        yy = cy0 + 26 + i * 24
+        mcol = GREEN if mark == '✓' else RED
+        g.append(s.text(x0 + 18, yy, mark, 'S' if mark == '✓' else 'B', 13, mcol))
+        g.append(txt(x0 + 36, yy, name, TERM_TXT if mark == '✓' else TERM_DIM, 'B' if mark == '✓' else 'R', 12.5))
+        g.append(txt(x0 + 140, yy, info, color, 'R', 12.5))
+    g.append(txt(x0, cy0 + 26 + 4 * 24 + 4, '↓ pick a result to register it  ·  enter compares them', TERM_DIM, 'R', 11))
+    g.append('</g>')
+    s.add(''.join(g))
+    s.style(f'.sel{{animation:sel {T}s linear infinite}}@keyframes sel{{0%,{pct(3.6, T)}{{opacity:0;transform:none}}'
+            f'{pct(3.8, T)},{pct(4.3, T)}{{opacity:1;transform:none}}{pct(4.5, T)},{pct(5.4, T)}{{opacity:1;transform:translateY(24px)}}'
+            f'{pct(5.6, T)},100%{{opacity:0;transform:translateY(24px)}}}}')
+    s.add(f'<g class="sel">' + txt(x0 + 2, cy0 + 26, '›', GREEN, 'B', 14) + '</g>')
+
+    def panel(cls, h, border, title_parts):
+        return (f'<g class="{cls}"><rect x="{x0 - 6}" y="{cy0 - 16}" width="{tw - 36}" height="{h}" rx="10" fill="#1E2647" stroke="{border}" stroke-width="1.5"/>'
+                + title_parts)
+
+    # B. result menu
+    k = win(5.6, 7.0)
+    s.add(panel(k, 96, GREEN_D,
+                s.text(x0 + 8, cy0 + 6, '✓', 'S', 13, GREEN) + txt(x0 + 26, cy0 + 6, 'acme.net is available · 11.49 USD / year', GREEN, 'B', 12.5))
+          + txt(x0 + 8, cy0 + 36, '› r  Register…', GREEN, 'B', 12.5) + txt(x0 + 150, cy0 + 36, 'years, nameservers, contact, then confirm', TERM_DIM, 'R', 11)
+          + txt(x0 + 8, cy0 + 60, '  i  Full result', TERM_TXT, 'R', 12.5) + '</g>')
+
+    # C. registration form
+    k = win(7.2, 9.4)
+    lines = [('Years', '‹ 2 years ›', GREEN), ('Nameservers', 'tr.apiname.com, eu.apiname.com', TERM_TXT), ('Contact handle', 'DNA-48213', TERM_TXT)]
+    g = [panel(k, 176, GREEN_D, txt(x0 + 8, cy0 + 6, 'Register acme.net', '#FFFFFF', 'B', 13))]
+    for i, (label, value, color) in enumerate(lines):
+        yy = cy0 + 36 + i * 24
+        g.append(txt(x0 + 8, yy, label, TERM_DIM, 'R', 12.5) + txt(x0 + 140, yy, value, color, 'R', 12.5))
+    g.append(txt(x0 + 8, cy0 + 116, 'Price', TERM_DIM, 'R', 12.5) + txt(x0 + 140, cy0 + 116, '22.98 USD', '#FFFFFF', 'B', 12.5)
+             + txt(x0 + 228, cy0 + 116, '(11.49 USD × 2)', TERM_DIM, 'R', 12))
+    kb = win(8.5, 9.4)
+    g.append(f'<g class="{kb}"><rect x="{x0 + 6}" y="{cy0 + 130}" width="92" height="22" rx="11" fill="{GREEN}"/>'
+             + txt(x0 + 52, cy0 + 145, 'Continue', INK, 'B', 12, anchor='middle') + '</g>')
+    g.append('</g>')
+    s.add(''.join(g))
+
+    # D. confirmation box
+    k = win(9.6, 11.9)
+    g = [panel(k, 196, AMBER, f'<rect x="{x0 + 6}" y="{cy0 - 8}" width="78" height="20" rx="10" fill="{AMBER_L}"/>'
+               + txt(x0 + 45, cy0 + 6, 'BILLABLE', INK, 'B', 11.5, anchor='middle')
+               + txt(x0 + 94, cy0 + 6, 'needs your OK', TERM_DIM, 'R', 12))]
+    g.append(txt(x0 + 8, cy0 + 34, 'Register a domain using existing contact handles', '#FFFFFF', 'B', 12.5))
+    g.append(txt(x0 + 8, cy0 + 58, 'domainName  acme.net', TERM_TXT, 'R', 12.5))
+    g.append(txt(x0 + 8, cy0 + 78, 'period      2', TERM_TXT, 'R', 12.5))
+    g.append(txt(x0 + 8, cy0 + 102, 'Price  22.98 USD', '#FFFFFF', 'B', 12.5))
+    g.append(txt(x0 + 8, cy0 + 126, 'This charges your balance on OTE (test).', AMBER_L, 'R', 12))
+    k1, k2 = win(9.6, 10.8), win(10.8, 11.9)
+    g.append(f'<g class="{k1}"><rect x="{x0 + 6}" y="{cy0 + 146}" width="88" height="22" rx="11" fill="#3A4468"/>'
+             + txt(x0 + 50, cy0 + 161, '› Cancel', '#FFFFFF', 'B', 12, anchor='middle')
+             + txt(x0 + 112, cy0 + 161, '[ Register ]', TERM_DIM, 'R', 12) + '</g>')
+    g.append(f'<g class="{k2}">' + txt(x0 + 14, cy0 + 161, '[ Cancel ]', TERM_DIM, 'R', 12)
+             + f'<rect x="{x0 + 104}" y="{cy0 + 146}" width="100" height="22" rx="11" fill="{AMBER_L}"/>'
+             + txt(x0 + 154, cy0 + 161, '› Register', INK, 'B', 12, anchor='middle') + '</g>')
+    g.append('</g>')
+    s.add(''.join(g))
+
+    # E. done
+    k = win(12.1, 16.4)
+    s.add(f'<g class="{k}">' + s.text(x0 + 2, cy0 + 6, '✓', 'S', 14, GREEN)
+          + txt(x0 + 22, cy0 + 6, 'acme.net registered · expires 2028-11-19', GREEN, 'B', 12.5)
+          + txt(x0 + 22, cy0 + 32, '→ manage it: ↓ My domains, or /manage acme.net', TERM_DIM, 'R', 11.5) + '</g>')
+
+    # status line, with the balance going down after the purchase
+    sy = ty + th - 18
+    s.add(f'<path d="M{tx + 1} {ty + th - 36}h{tw - 2}" stroke="#3D4A6B" stroke-width="1"/>')
+    s.add(f'<rect x="{x0}" y="{sy - 13}" width="38" height="18" rx="4" fill="{GREEN}"/>' + txt(x0 + 19, sy, 'OTE', INK, 'B', 11, anchor='middle'))
+    s.add(txt(x0 + 46, sy, 'test  ·  Acme Digital Ltd.  ·', TERM_DIM, 'R', 11.5))
+    bx2 = x0 + 46 + width('R', 'test  ·  Acme Digital Ltd.  ·', 11.5) + 8
+    k2 = win(12.3, 16.6)
+    s.style(f'.b0{{animation:b0 {T}s linear infinite}}@keyframes b0{{0%,{pct(12.3, T)}{{opacity:1}}{pct(12.5, T)},{pct(16.6, T)}{{opacity:0}}{pct(16.8, T)},100%{{opacity:1}}}}')
+    s.add('<g class="b0">' + txt(bx2, sy, '1,284.50 USD', GREEN, 'R', 11.5) + '</g>')
+    s.add(f'<g class="{k2}">' + txt(bx2, sy, '1,261.52 USD', GREEN, 'B', 11.5) + '</g>')
+    s.add(txt(tx + tw - 24, sy, '? keys', TERM_DIM, 'R', 11, anchor='end'))
+    s.add('</g>')
+    return write(lang, 'shell.svg', s)
+
+
 # --------------------------------------------------------------------------- language selector pills
 
 def star(cx, cy, r, fill):
@@ -525,14 +727,20 @@ def icons():
     icon_svg('h-output.svg', 'Output',
              f'<path d="M12 9.5c-2 0-2.5 1-2.5 2.5v1.5c0 1-.6 2-1.5 2.5.9.5 1.5 1.5 1.5 2.5V20c0 1.5.5 2.5 2.5 2.5M20 9.5c2 0 2.5 1 2.5 2.5v1.5c0 1 .6 2 1.5 2.5-.9.5-1.5 1.5-1.5 2.5V20c0 1.5-.5 2.5-2.5 2.5" fill="none" stroke="{c}" stroke-width="1.7" stroke-linecap="round"/>'
              f'<circle cx="16" cy="16" r="1.8" fill="{g}" class="pu"/>')
-    print('section icons: 9 files')
+    icon_svg('h-shell.svg', 'Interactive shell',
+             f'<rect x="7.5" y="8.5" width="17" height="15" rx="3" fill="none" stroke="{c}" stroke-width="1.7"/>'
+             f'<path d="M7.5 12h17" stroke="{c}" stroke-width="1.4"/>'
+             f'<path d="M10.5 15.5l2 1.6-2 1.6" fill="none" stroke="{g}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>'
+             f'<g class="mn"><rect x="14.5" y="15.6" width="7" height="1.6" rx=".8" fill="{g}"/><rect x="14.5" y="18.6" width="5" height="1.6" rx=".8" fill="{c}"/></g>',
+             '.mn rect{animation:mn 2.4s steps(1) infinite}.mn rect:nth-child(2){animation-delay:1.2s}@keyframes mn{0%{fill:' + g + '}50%,100%{fill:' + c + '}}')
+    print('section icons: 10 files')
 
 
 if __name__ == '__main__':
     only = os.environ.get('LANGS', '').split(',') if os.environ.get('LANGS') else LANG_ORDER
     for code in only:
         lang = Lang(code)
-        sizes = [f(lang) for f in (hero, stats, flow, safety, mcp)]
-        print(f'{code}: ' + ', '.join(f'{n} {b / 1024:.0f}KB' for n, b in zip(['hero', 'stats', 'flow', 'safety', 'mcp'], sizes)))
+        sizes = [f(lang) for f in (hero, stats, flow, safety, mcp, shell)]
+        print(f'{code}: ' + ', '.join(f'{n} {b / 1024:.0f}KB' for n, b in zip(['hero', 'stats', 'flow', 'safety', 'mcp', 'shell'], sizes)))
     lang_pills()
     icons()

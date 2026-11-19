@@ -102,11 +102,32 @@ dna auth login
 dna domain list
 ```
 
+<a id="interactive-shell"></a>
+
+## <img src="./assets/h-shell.svg" width="30" height="30" alt=""> 只需输入 `dna`：交互式终端
+
+<img src="./assets/cn/shell.svg" width="1200" alt="dna 交互式终端：输入 acme 即显示可注册的后缀及价格，用户选择 acme.net，填写简短的注册表单，在确认对话框中确认付费步骤，域名注册完成。">
+
+在终端中单独运行 `dna`。你无需记住任何命令：一切都用 ↑↓ 和 Enter 选择，Esc 总是返回上一步。
+
+|  | 你能得到什么 |
+|---|---|
+| 🔎 **实时搜索** | 输入一个名称，例如 `acme`：可注册的后缀及其价格会在输入时出现。用 ↓ 选择一个，通过简短的表单完成注册。 |
+| ⚡ **快捷操作** | 在空行按 ↓：我的域名、注册域名、DNS 记录、余额、在 OTE 与生产环境之间切换。 |
+| 🗂️ **域名菜单** | 搜索你的域名并按 Enter：详情、DNS、续费、锁定、WHOIS 隐私、域名服务器、转移授权码。 |
+| 🛡️ **不会误操作** | 每个付费或破坏性步骤都以确认对话框结束，显示确切的请求和价格。在你作出其他选择之前，“取消”始终处于选中状态。 |
+| 🤖 **连接 AI 智能体** | `/agent` 列出 20 多个智能体：Claude Code、ChatGPT、Cursor、Claude Desktop、Codex 等。dna 会完成配置、检查凭据并提供现成的提示词。 |
+
+脚本和 AI 智能体永远不会看到交互式终端：通过管道或由智能体运行时，`dna` 仍像以前一样输出 JSON 和帮助信息。
+
 <a id="connect-your-ai-agent"></a>
 
 ## <img src="./assets/h-mcp.svg" width="30" height="30" alt=""> 连接你的 AI 智能体
 
 <img src="./assets/cn/mcp.svg" width="1200" alt="Model Context Protocol：dna mcp serve 提供 65 个带安全注解的工具。不带 confirm 的付费工具调用会返回预览；获得批准后带上 confirm=true 才会执行。">
+
+> [!TIP]
+> **最快的方法：** 运行 `dna`，按 ↓ 并选择 **Connect an AI agent**（或输入 `/agent`）。从 20 多个智能体中选择一个，选择 OTE 或生产环境以及它的权限范围。dna 会执行配置或把自己加入智能体的配置文件，检查凭据，并为你复制现成的提示词。
 
 ```bash
 claude mcp add dna -- dna mcp serve --env ote      # Claude Code
@@ -304,6 +325,7 @@ dna enums DomainStatus                        # 查看状态 7 的含义
 
 | 命令组 | 功能 |
 |---|---|
+| `dna` | 交互式终端：实时搜索、菜单、引导式表单、AI 智能体配置 |
 | `dna domain` | 搜索、批量搜索、列表、信息、注册、续费、转移、恢复、锁定、隐私保护、授权码、联系人、文档、转发、名称服务器、子名称服务器 |
 | `dna dns` · `dna dnssec` | 区域记录、DS 记录 |
 | `dna contact` | 联系人句柄（handle）与验证 |

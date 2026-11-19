@@ -102,11 +102,32 @@ dna auth login
 dna domain list
 ```
 
+<a id="interactive-shell"></a>
+
+## <img src="./assets/h-shell.svg" width="30" height="30" alt=""> Just type `dna`: the interactive shell
+
+<img src="./assets/shell.svg" width="1200" alt="The dna interactive shell: typing acme shows which extensions are free with their prices, the user picks acme.net, fills a short registration form, confirms the billable step in a confirmation box and the domain is registered.">
+
+Run `dna` on its own in a terminal. You don't need to know a single command: everything is a choice with ↑↓ and Enter, and Esc always goes back.
+
+|  | What you get |
+|---|---|
+| 🔎 **Live search** | Type a name like `acme`: free extensions and their prices appear while you type. ↓ picks one and registers it through a short form. |
+| ⚡ **Quick actions** | ↓ on an empty line: your domains, register a domain, DNS records, balance, switch between OTE and production. |
+| 🗂️ **Domain menus** | Search your domains and press Enter: details, DNS, renew, lock, WHOIS privacy, nameservers, auth code. |
+| 🛡️ **Nothing by accident** | Every billable or destructive step ends in a confirmation box with the exact request and the price. Cancel stays selected until you choose otherwise. |
+| 🤖 **Connect an AI agent** | `/agent` lists 20+ agents: Claude Code, ChatGPT, Cursor, Claude Desktop, Codex and more. dna sets it up, checks the credentials and hands you ready-made prompts. |
+
+Scripts and AI agents never see the shell: piped, or run by an agent, `dna` prints JSON and the help exactly as before.
+
 <a id="connect-your-ai-agent"></a>
 
 ## <img src="./assets/h-mcp.svg" width="30" height="30" alt=""> Connect your AI agent
 
 <img src="./assets/mcp.svg" width="1200" alt="Model Context Protocol: dna mcp serve exposes 65 tools with safety annotations. A billable tool call without confirm returns a preview; with confirm=true after approval it runs.">
+
+> [!TIP]
+> **The quickest way:** run `dna`, press ↓ and choose **Connect an AI agent** (or type `/agent`). Pick one of 20+ agents, choose OTE or production and how much it may do. dna runs the setup or adds itself to the agent's config file, checks the credentials and copies ready-made prompts for you.
 
 ```bash
 claude mcp add dna -- dna mcp serve --env ote      # Claude Code
@@ -310,6 +331,7 @@ Errors are JSON on stderr: `{"error":{"kind","code","message","status","fields",
 
 | group | what it does |
 |---|---|
+| `dna` | the interactive shell: live search, menus, guided forms, AI agent setup |
 | `dna domain` | search, bulk search, list, info, register, renew, transfer, restore, lock, privacy, auth code, contacts, documents, forwarding, nameservers, child hosts |
 | `dna dns` · `dna dnssec` | zone records, DS records |
 | `dna contact` | contact handles and verification |
