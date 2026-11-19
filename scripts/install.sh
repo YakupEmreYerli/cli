@@ -64,7 +64,11 @@ if [ -z "$dir" ]; then
   if [ -w /usr/local/bin ]; then dir=/usr/local/bin; else dir="$HOME/.local/bin"; fi
 fi
 mkdir -p "$dir"
-install -m 0755 "$tmp/dna" "$dir/dna" 2>/dev/null || { cp "$tmp/dna" "$dir/dna" && chmod 0755 "$dir/dna"; }
+# Copy next to the target, then rename over it: a rename also works while dna
+# is running (an MCP server started by an AI app), where writing into the
+# running file would fail with "Text file busy".
+cp "$tmp/dna" "$dir/.dna.new" && chmod 0755 "$dir/.dna.new" && mv -f "$dir/.dna.new" "$dir/dna" \
+  || { rm -f "$dir/.dna.new"; fail "could not write $dir/dna (set DNA_INSTALL_DIR to a directory you can write)"; }
 
 say "Installed $("$dir/dna" version 2>/dev/null | head -n 1) to $dir/dna"
 case ":$PATH:" in

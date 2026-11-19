@@ -5,6 +5,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- The install scripts can update dna while it is running (for example as an MCP server started by Claude, Cursor or another AI app). On Windows the running `dna.exe` is renamed out of the way instead of failing with "the file is being used by another process"; on Linux and macOS the new binary is renamed over the old one instead of failing with "Text file busy".
+
 ## [1.1.0] - 2026-11-19
 
 ### Added

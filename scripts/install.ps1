@@ -42,7 +42,23 @@ try {
     $dir = $env:DNA_INSTALL_DIR
     if (-not $dir) { $dir = Join-Path $env:LOCALAPPDATA 'Programs\dna' }
     New-Item -ItemType Directory -Path $dir -Force | Out-Null
-    Copy-Item (Join-Path $tmp 'dna.exe') (Join-Path $dir 'dna.exe') -Force
+    $target = Join-Path $dir 'dna.exe'
+    # Copies left by earlier updates; still-running ones stay until they exit.
+    Get-ChildItem -Path $dir -Filter 'dna.exe.old*' -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+    try {
+        Copy-Item (Join-Path $tmp 'dna.exe') $target -Force
+    }
+    catch [System.IO.IOException] {
+        # A running dna.exe (an MCP server started by Claude, Cursor or another AI
+        # app, or an open dna shell) cannot be overwritten, but Windows lets us
+        # rename it. Move it aside and put the new version in its place; the
+        # running copies keep working until they are restarted.
+        $old = Join-Path $dir ('dna.exe.old-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
+        Move-Item -Path $target -Destination $old -Force
+        Copy-Item (Join-Path $tmp 'dna.exe') $target -Force
+        Write-Host 'dna was running (for example as an MCP server of an AI app). The new version is installed;'
+        Write-Host 'restart those apps (or start a new session) to use it.'
+    }
 
     $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
     if (-not (($userPath -split ';') -contains $dir)) {
