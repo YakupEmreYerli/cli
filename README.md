@@ -102,6 +102,8 @@ dna auth login
 dna domain list
 ```
 
+<a id="connect-your-ai-agent"></a>
+
 ## <img src="./assets/h-mcp.svg" width="30" height="30" alt=""> Connect your AI agent
 
 <img src="./assets/mcp.svg" width="1200" alt="Model Context Protocol: dna mcp serve exposes 65 tools with safety annotations. A billable tool call without confirm returns a preview; with confirm=true after approval it runs.">
@@ -175,6 +177,91 @@ dna mcp serve --read-only            # look, don't touch
 dna mcp serve --no-billable          # everything except purchases
 dna mcp serve --groups domain,dns    # only these command groups
 ```
+
+<a id="ready-made-prompts"></a>
+
+## <img src="./assets/h-prompt.svg" width="30" height="30" alt=""> Ready-made prompts for Claude and ChatGPT
+
+Copy a prompt, paste it into your AI assistant and let it do the work. Every prompt starts in the OTE test environment and stops for your approval before anything billable.
+
+**Set up dna in Claude Code**
+
+```text
+Set up the dna CLI for me (https://github.com/domainreseller/cli).
+1. Install it with the official install script for my operating system, then run
+   `dna version` and `dna doctor`.
+2. Install the Claude Code skill with `dna agent skill --install` and add the MCP
+   server with `claude mcp add dna -- dna mcp serve --env ote`.
+3. Don't ask me to paste my API key into this chat. Tell me to run
+   `dna auth login --env ote` myself, then check the connection with
+   `dna --ote account get`.
+Work only in the OTE test environment and never use `--yes` without my approval.
+```
+
+**Set up dna in ChatGPT Codex**
+
+```text
+Set up the dna CLI for me (https://github.com/domainreseller/cli).
+1. Install it with the official install script for my operating system, then run
+   `dna version` and `dna doctor`.
+2. Add it to my Codex config (`~/.codex/config.toml`) as an MCP server named `dna`
+   with the command `dna` and the arguments `mcp serve --env ote`.
+3. Don't ask me to paste my API key into this chat. Tell me to run
+   `dna auth login --env ote` myself, then check the connection with
+   `dna --ote account get`.
+Work only in the OTE test environment and never use `--yes` without my approval.
+```
+
+**No terminal? Ask ChatGPT or Claude chat**
+
+```text
+Read https://raw.githubusercontent.com/domainreseller/cli/main/llms.txt and the dna
+docs it links to. Then give me the exact dna commands, step by step, to register a
+domain in the OTE test environment: install, log in, search, preview with `--dry-run`
+and register. Explain what each command does.
+```
+
+<details>
+<summary><b>More prompts for everyday work</b></summary>
+<br>
+
+**Find and register a domain**
+
+```text
+With dna, check whether brandname.com, brandname.net and brandname.io are available.
+Show the results with prices in a table, then preview the registration of the cheapest
+available one with `--dry-run`. Don't register anything until I say yes.
+```
+
+**Upcoming renewals**
+
+```text
+With dna, list my domains that expire in the next 60 days with their renewal prices,
+sorted by expiry date. Don't renew anything.
+```
+
+**Point a domain to a server**
+
+```text
+With dna, point example.com to 203.0.113.10: add A records for `@` and `www`, then
+show me the final DNS zone. Ask me before changing or deleting any existing record.
+```
+
+**Transfer a domain in**
+
+```text
+With dna, check whether example.org can be transferred to my account, tell me what I
+still need (auth code, unlocking) and preview the transfer with `--dry-run`.
+```
+
+**Order an SSL certificate**
+
+```text
+With dna, find the cheapest DV SSL certificate for example.com, create a CSR and
+preview the order. Wait for my approval before buying.
+```
+
+</details>
 
 ## <img src="./assets/h-flow.svg" width="30" height="30" alt=""> How it works
 

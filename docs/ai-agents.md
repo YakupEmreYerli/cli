@@ -155,6 +155,8 @@ echo '{"domainName":"example.com"}' | dna domain search --body - -o json
 
 ## Example prompts
 
+Copy-paste prompts for setting up dna in Claude Code or Codex, and for everyday tasks, are in the README under [Ready-made prompts](../README.md#ready-made-prompts) (also translated in every README language). A few more ideas:
+
 - "Using the dna tools on OTE, check whether *brandname* is available as .com, .net and .com.tr and show prices."
 - "List my domains that expire within 45 days and check whether each can be renewed. Don't renew anything."
 - "Point www.example.com to 192.0.2.10 with a 5 minute TTL and show me the zone afterwards."

@@ -102,6 +102,8 @@ dna auth login
 dna domain list
 ```
 
+<a id="connect-your-ai-agent"></a>
+
 ## <img src="./assets/h-mcp.svg" width="30" height="30" alt=""> Yapay zeka ajanınızı bağlayın
 
 <img src="./assets/tr/mcp.svg" width="1200" alt="Model Context Protocol: dna mcp serve, güvenlik etiketleriyle 65 araç sunar. confirm olmadan yapılan ücretli bir araç çağrısı önizleme döndürür; onaydan sonra confirm=true ile çalışır.">
@@ -175,6 +177,92 @@ dna mcp serve --read-only            # bak ama dokunma
 dna mcp serve --no-billable          # satın almalar hariç her şey
 dna mcp serve --groups domain,dns    # yalnızca bu komut grupları
 ```
+
+<a id="ready-made-prompts"></a>
+
+## <img src="./assets/h-prompt.svg" width="30" height="30" alt=""> Claude ve ChatGPT için hazır promptlar
+
+Bir promptu kopyalayın, AI asistanınıza yapıştırın ve gerisini ona bırakın. Her prompt OTE test ortamında başlar ve ücretli bir işlemden önce onayınızı bekler.
+
+**dna'yı Claude Code'da kurun**
+
+```text
+Benim için dna CLI'yi kur (https://github.com/domainreseller/cli).
+1. İşletim sistemime uygun resmi kurulum betiğiyle kur, ardından `dna version` ve
+   `dna doctor` komutlarını çalıştır.
+2. Claude Code skill'ini `dna agent skill --install` ile kur ve MCP sunucusunu
+   `claude mcp add dna -- dna mcp serve --env ote` ile ekle.
+3. API anahtarımı bu sohbete yapıştırmamı isteme. `dna auth login --env ote` komutunu
+   benim çalıştırmamı söyle, sonra bağlantıyı `dna --ote account get` ile kontrol et.
+Yalnızca OTE test ortamında çalış ve onayım olmadan asla `--yes` kullanma.
+```
+
+**dna'yı ChatGPT Codex'te kurun**
+
+```text
+Benim için dna CLI'yi kur (https://github.com/domainreseller/cli).
+1. İşletim sistemime uygun resmi kurulum betiğiyle kur, ardından `dna version` ve
+   `dna doctor` komutlarını çalıştır.
+2. Codex yapılandırmama (`~/.codex/config.toml`) `dna` adında bir MCP sunucusu olarak
+   ekle: komut `dna`, argümanlar `mcp serve --env ote`.
+3. API anahtarımı bu sohbete yapıştırmamı isteme. `dna auth login --env ote` komutunu
+   benim çalıştırmamı söyle, sonra bağlantıyı `dna --ote account get` ile kontrol et.
+Yalnızca OTE test ortamında çalış ve onayım olmadan asla `--yes` kullanma.
+```
+
+**Terminaliniz yok mu? ChatGPT veya Claude sohbetine sorun**
+
+```text
+https://raw.githubusercontent.com/domainreseller/cli/main/llms.txt dosyasını ve
+bağlantı verdiği dna dokümanlarını oku. Sonra OTE test ortamında bir alan adı
+kaydetmek için gereken dna komutlarını adım adım ve eksiksiz ver: kurulum, giriş,
+sorgulama, `--dry-run` ile önizleme ve kayıt. Her komutun ne yaptığını açıkla.
+```
+
+<details>
+<summary><b>Günlük işler için daha fazla prompt</b></summary>
+<br>
+
+**Alan adı bulun ve kaydedin**
+
+```text
+dna ile brandname.com, brandname.net ve brandname.io alan adlarının müsait olup
+olmadığını kontrol et. Sonuçları fiyatlarıyla bir tabloda göster, ardından müsait
+olanlar arasında en ucuzunun kaydını `--dry-run` ile önizle. Ben evet demeden hiçbir
+şey kaydetme.
+```
+
+**Yaklaşan yenilemeler**
+
+```text
+dna ile önümüzdeki 60 gün içinde süresi dolacak alan adlarımı yenileme fiyatlarıyla
+birlikte, bitiş tarihine göre sıralı listele. Hiçbir şeyi yenileme.
+```
+
+**Alan adını bir sunucuya yönlendirin**
+
+```text
+dna ile example.com alan adını 203.0.113.10 adresine yönlendir: `@` ve `www` için A
+kayıtları ekle, ardından son DNS bölgesini göster. Mevcut bir kaydı değiştirmeden veya
+silmeden önce bana sor.
+```
+
+**Alan adı transferi**
+
+```text
+dna ile example.org alan adının hesabıma transfer edilip edilemeyeceğini kontrol et,
+eksik olanları söyle (auth kodu, kilidin kaldırılması) ve transferi `--dry-run` ile
+önizle.
+```
+
+**SSL sertifikası sipariş edin**
+
+```text
+dna ile example.com için en ucuz DV SSL sertifikasını bul, bir CSR oluştur ve siparişi
+önizle. Satın almadan önce onayımı bekle.
+```
+
+</details>
 
 ## <img src="./assets/h-flow.svg" width="30" height="30" alt=""> Nasıl çalışır
 

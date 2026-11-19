@@ -515,13 +515,17 @@ def icons():
              f'<path d="M14 11h8M14 16h8M14 21h6" stroke="{c}" stroke-width="1.8" stroke-linecap="round"/>',
              '.cm circle{animation:cm 3s steps(1) infinite}.cm circle:nth-child(2){animation-delay:1s}.cm circle:nth-child(3){animation-delay:2s}'
              '@keyframes cm{0%{fill:' + g + '}33%,100%{fill:' + c + '}}')
+    icon_svg('h-prompt.svg', 'Prompts',
+             f'<path d="M8.5 10.5a2.5 2.5 0 0 1 2.5-2.5h10a2.5 2.5 0 0 1 2.5 2.5v7a2.5 2.5 0 0 1-2.5 2.5h-5.5l-4 3.5V20h-.5a2.5 2.5 0 0 1-2.5-2.5z" fill="none" stroke="{c}" stroke-width="1.7" stroke-linejoin="round"/>'
+             f'<g class="tw"><path d="M16 10.6v5.8M13.1 13.5h5.8" stroke="{g}" stroke-width="1.8" stroke-linecap="round"/></g>',
+             '.tw{transform-box:fill-box;transform-origin:center;animation:tw 2.4s ease-in-out infinite}@keyframes tw{50%{transform:rotate(45deg) scale(.7);opacity:.55}}')
     icon_svg('h-docs.svg', 'Documentation',
              f'<path d="M9 9.5h5.5c1 0 1.5.6 1.5 1.5v12c0-.9-.6-1.5-1.5-1.5H9zM23 9.5h-5.5c-1 0-1.5.6-1.5 1.5v12c0-.9.6-1.5 1.5-1.5H23z" fill="none" stroke="{c}" stroke-width="1.6" stroke-linejoin="round"/>'
              f'<path d="M11 13h3M11 16h3M18 13h3" stroke="{g}" stroke-width="1.4" stroke-linecap="round" class="pu"/>')
     icon_svg('h-output.svg', 'Output',
              f'<path d="M12 9.5c-2 0-2.5 1-2.5 2.5v1.5c0 1-.6 2-1.5 2.5.9.5 1.5 1.5 1.5 2.5V20c0 1.5.5 2.5 2.5 2.5M20 9.5c2 0 2.5 1 2.5 2.5v1.5c0 1 .6 2 1.5 2.5-.9.5-1.5 1.5-1.5 2.5V20c0 1.5-.5 2.5-2.5 2.5" fill="none" stroke="{c}" stroke-width="1.7" stroke-linecap="round"/>'
              f'<circle cx="16" cy="16" r="1.8" fill="{g}" class="pu"/>')
-    print('section icons: 8 files')
+    print('section icons: 9 files')
 
 
 if __name__ == '__main__':

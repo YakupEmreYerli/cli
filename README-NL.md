@@ -102,6 +102,8 @@ dna auth login
 dna domain list
 ```
 
+<a id="connect-your-ai-agent"></a>
+
 ## <img src="./assets/h-mcp.svg" width="30" height="30" alt=""> Verbind je AI-agent
 
 <img src="./assets/nl/mcp.svg" width="1200" alt="Model Context Protocol: dna mcp serve biedt 65 tools met veiligheidsannotaties. Een factureerbare tool-aanroep zonder confirm geeft een voorbeeld terug; met confirm=true na goedkeuring wordt hij uitgevoerd.">
@@ -175,6 +177,96 @@ dna mcp serve --read-only            # kijken, niet aankomen
 dna mcp serve --no-billable          # alles behalve aankopen
 dna mcp serve --groups domain,dns    # alleen deze commandogroepen
 ```
+
+<a id="ready-made-prompts"></a>
+
+## <img src="./assets/h-prompt.svg" width="30" height="30" alt=""> Kant-en-klare prompts voor Claude en ChatGPT
+
+Kopieer een prompt, plak die in uw AI-assistent en laat de assistent het werk doen. Elke prompt begint in de OTE-testomgeving en wacht op uw goedkeuring voordat er iets betaalds gebeurt.
+
+**dna instellen in Claude Code**
+
+```text
+Zet de dna CLI voor me op (https://github.com/domainreseller/cli).
+1. Installeer hem met het officiële installatiescript voor mijn besturingssysteem en
+   voer daarna `dna version` en `dna doctor` uit.
+2. Installeer de skill voor Claude Code met `dna agent skill --install` en voeg de
+   MCP-server toe met `claude mcp add dna -- dna mcp serve --env ote`.
+3. Vraag me niet om mijn API-key in deze chat te plakken. Zeg me dat ik
+   `dna auth login --env ote` zelf moet uitvoeren en controleer daarna de verbinding
+   met `dna --ote account get`.
+Werk alleen in de OTE-testomgeving en gebruik nooit `--yes` zonder mijn goedkeuring.
+```
+
+**dna instellen in ChatGPT Codex**
+
+```text
+Zet de dna CLI voor me op (https://github.com/domainreseller/cli).
+1. Installeer hem met het officiële installatiescript voor mijn besturingssysteem en
+   voer daarna `dna version` en `dna doctor` uit.
+2. Voeg hem toe aan mijn Codex-configuratie (`~/.codex/config.toml`) als MCP-server
+   met de naam `dna`, het commando `dna` en de argumenten `mcp serve --env ote`.
+3. Vraag me niet om mijn API-key in deze chat te plakken. Zeg me dat ik
+   `dna auth login --env ote` zelf moet uitvoeren en controleer daarna de verbinding
+   met `dna --ote account get`.
+Werk alleen in de OTE-testomgeving en gebruik nooit `--yes` zonder mijn goedkeuring.
+```
+
+**Geen terminal? Vraag het aan ChatGPT of Claude in de chat**
+
+```text
+Lees https://raw.githubusercontent.com/domainreseller/cli/main/llms.txt en de
+dna-documentatie waarnaar daar wordt gelinkt. Geef me daarna stap voor stap de exacte
+dna-commando's om een domeinnaam te registreren in de OTE-testomgeving: installeren,
+inloggen, zoeken, als voorbeeld tonen met `--dry-run` en registreren. Leg uit wat elk
+commando doet.
+```
+
+<details>
+<summary><b>Meer prompts voor dagelijks werk</b></summary>
+<br>
+
+**Domeinnaam vinden en registreren**
+
+```text
+Controleer met dna of brandname.com, brandname.net en brandname.io beschikbaar zijn.
+Zet de resultaten met prijzen in een tabel en laat daarna met `--dry-run` een
+voorbeeld zien van de registratie van de goedkoopste beschikbare naam. Registreer
+niets voordat ik ja zeg.
+```
+
+**Aankomende verlengingen**
+
+```text
+Geef met dna een lijst van mijn domeinnamen die in de komende 60 dagen verlopen, met
+hun verlengingsprijzen, gesorteerd op vervaldatum. Verleng niets.
+```
+
+**Domeinnaam naar een server laten verwijzen**
+
+```text
+Laat example.com met dna naar 203.0.113.10 verwijzen: voeg A-records toe voor `@` en
+`www` en laat me daarna de uiteindelijke DNS-zone zien. Vraag het me voordat je een
+bestaand record wijzigt of verwijdert.
+```
+
+**Domeinnaam naar uw account verhuizen**
+
+```text
+Controleer met dna of example.org naar mijn account verhuisd kan worden, vertel me wat
+ik nog nodig heb (authcode, ontgrendeling) en laat met `--dry-run` een voorbeeld van
+de verhuizing zien.
+```
+
+**SSL-certificaat bestellen**
+
+```text
+Zoek met dna het goedkoopste DV-SSL-certificaat voor example.com, maak een CSR aan en
+laat me een voorbeeld van de bestelling zien. Wacht op mijn goedkeuring voordat je het
+koopt.
+```
+
+</details>
 
 ## <img src="./assets/h-flow.svg" width="30" height="30" alt=""> Hoe het werkt
 

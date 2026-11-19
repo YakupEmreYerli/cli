@@ -102,6 +102,8 @@ dna auth login
 dna domain list
 ```
 
+<a id="connect-your-ai-agent"></a>
+
 ## <img src="./assets/h-mcp.svg" width="30" height="30" alt=""> اربط وكيل الذكاء الاصطناعي الخاص بك
 
 <img src="./assets/sa/mcp.svg" width="1200" alt="Model Context Protocol: يتيح dna mcp serve استخدام 65 أداة مزوّدة بتعليقات توضيحية للأمان. استدعاء أداة مدفوعة دون confirm يُعيد معاينة؛ ومع confirm=true بعد الموافقة يُنفَّذ.">
@@ -175,6 +177,123 @@ dna mcp serve --read-only            # اطّلاع فقط دون أي تعدي�
 dna mcp serve --no-billable          # كل شيء ما عدا عمليات الشراء
 dna mcp serve --groups domain,dns    # مجموعات الأوامر هذه فقط
 ```
+
+<a id="ready-made-prompts"></a>
+
+## <img src="./assets/h-prompt.svg" width="30" height="30" alt=""> موجّهات جاهزة لـ Claude وChatGPT
+
+انسخ موجّهًا، والصقه في مساعد الذكاء الاصطناعي لديك، واتركه ينجز العمل. يبدأ كل موجّه في بيئة الاختبار OTE، ويتوقف لانتظار موافقتك قبل أي عملية مدفوعة.
+
+**إعداد dna في Claude Code**
+
+<div dir="rtl">
+
+```text
+قم بإعداد أداة dna CLI لي (https://github.com/domainreseller/cli).
+1. ثبّتها باستخدام سكربت التثبيت الرسمي الخاص بنظام التشغيل لديّ، ثم شغّل
+   ‎`dna version`‎ و‎`dna doctor`‎.
+2. ثبّت مهارة Claude Code باستخدام ‎`dna agent skill --install`‎، وأضف خادم MCP باستخدام
+   ‎`claude mcp add dna -- dna mcp serve --env ote`‎.
+3. لا تطلب مني لصق مفتاح API الخاص بي في هذه المحادثة. اطلب مني تشغيل
+   ‎`dna auth login --env ote`‎ بنفسي، ثم تحقّق من الاتصال باستخدام
+   ‎`dna --ote account get`‎.
+اعمل في بيئة الاختبار OTE فقط، ولا تستخدم ‎`--yes`‎ أبدًا دون موافقتي.
+```
+
+</div>
+
+**إعداد dna في ChatGPT Codex**
+
+<div dir="rtl">
+
+```text
+قم بإعداد أداة dna CLI لي (https://github.com/domainreseller/cli).
+1. ثبّتها باستخدام سكربت التثبيت الرسمي الخاص بنظام التشغيل لديّ، ثم شغّل
+   ‎`dna version`‎ و‎`dna doctor`‎.
+2. أضفها إلى ملف إعدادات Codex لديّ (‎`~/.codex/config.toml`‎) كخادم MCP باسم ‎`dna`‎، على
+   أن يكون الأمر ‎`dna`‎ والوسائط ‎`mcp serve --env ote`‎.
+3. لا تطلب مني لصق مفتاح API الخاص بي في هذه المحادثة. اطلب مني تشغيل
+   ‎`dna auth login --env ote`‎ بنفسي، ثم تحقّق من الاتصال باستخدام
+   ‎`dna --ote account get`‎.
+اعمل في بيئة الاختبار OTE فقط، ولا تستخدم ‎`--yes`‎ أبدًا دون موافقتي.
+```
+
+</div>
+
+**لا تتوفر لديك طرفية؟ اسأل ChatGPT أو Claude عبر الدردشة**
+
+<div dir="rtl">
+
+```text
+اقرأ الملف https://raw.githubusercontent.com/domainreseller/cli/main/llms.txt وصفحات
+توثيق dna التي يحيل إليها. ثم أعطني أوامر dna الدقيقة، خطوةً بخطوة، لتسجيل نطاق في
+بيئة الاختبار OTE: التثبيت، وتسجيل الدخول، والبحث، والمعاينة باستخدام ‎`--dry-run`‎،
+والتسجيل. واشرح ما يفعله كل أمر.
+```
+
+</div>
+
+<details>
+<summary dir="rtl"><b>المزيد من الموجّهات للمهام اليومية</b></summary>
+<br>
+
+**البحث عن نطاق وتسجيله**
+
+<div dir="rtl">
+
+```text
+باستخدام dna، تحقّق مما إذا كانت النطاقات brandname.com وbrandname.net وbrandname.io
+متاحة. اعرض النتائج مع أسعارها في جدول، ثم عاين تسجيل أرخص نطاق متاح منها باستخدام
+‎`--dry-run`‎. لا تسجّل أي شيء حتى أقول نعم.
+```
+
+</div>
+
+**التجديدات القادمة**
+
+<div dir="rtl">
+
+```text
+باستخدام dna، اعرض قائمة بنطاقاتي التي تنتهي صلاحيتها خلال الأيام الـ60 القادمة مع
+أسعار تجديدها، مرتبةً حسب تاريخ الانتهاء. لا تجدّد أي شيء.
+```
+
+</div>
+
+**توجيه نطاق إلى خادم**
+
+<div dir="rtl">
+
+```text
+باستخدام dna، وجّه example.com إلى 203.0.113.10: أضف سجلات A لـ ‎`@`‎ و‎`www`‎، ثم اعرض لي
+منطقة DNS النهائية. اسألني قبل تعديل أي سجل موجود أو حذفه.
+```
+
+</div>
+
+**نقل نطاق إلى حسابك**
+
+<div dir="rtl">
+
+```text
+باستخدام dna، تحقّق مما إذا كان يمكن نقل example.org إلى حسابي، وأخبرني بما لا يزال
+ينقصني (رمز التفويض auth code، وإلغاء القفل)، وعاين عملية النقل باستخدام ‎`--dry-run`‎.
+```
+
+</div>
+
+**طلب شهادة SSL**
+
+<div dir="rtl">
+
+```text
+باستخدام dna، ابحث عن أرخص شهادة DV SSL لـ example.com، وأنشئ CSR، وعاين الطلب. انتظر
+موافقتي قبل الشراء.
+```
+
+</div>
+
+</details>
 
 ## <img src="./assets/h-flow.svg" width="30" height="30" alt=""> آلية العمل
 

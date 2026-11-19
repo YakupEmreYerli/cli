@@ -102,6 +102,8 @@ dna auth login
 dna domain list
 ```
 
+<a id="connect-your-ai-agent"></a>
+
 ## <img src="./assets/h-mcp.svg" width="30" height="30" alt=""> KI-Agenten verbinden
 
 <img src="./assets/de/mcp.svg" width="1200" alt="Model Context Protocol: dna mcp serve stellt 65 Tools mit Sicherheitsannotationen bereit. Ein kostenpflichtiger Tool-Aufruf ohne confirm liefert eine Vorschau; mit confirm=true nach der Freigabe wird er ausgeführt.">
@@ -175,6 +177,95 @@ dna mcp serve --read-only            # nur ansehen, nichts anfassen
 dna mcp serve --no-billable          # alles außer Käufen
 dna mcp serve --groups domain,dns    # nur diese Befehlsgruppen
 ```
+
+<a id="ready-made-prompts"></a>
+
+## <img src="./assets/h-prompt.svg" width="30" height="30" alt=""> Fertige Prompts für Claude und ChatGPT
+
+Kopieren Sie einen Prompt, fügen Sie ihn in Ihren KI-Assistenten ein und lassen Sie ihn die Arbeit erledigen. Jeder Prompt beginnt in der OTE-Testumgebung und hält vor jeder kostenpflichtigen Aktion an, bis Sie sie freigeben.
+
+**dna in Claude Code einrichten**
+
+```text
+Richte die dna CLI für mich ein (https://github.com/domainreseller/cli).
+1. Installiere sie mit dem offiziellen Installationsskript für mein Betriebssystem und
+   führe dann `dna version` und `dna doctor` aus.
+2. Installiere den Skill für Claude Code mit `dna agent skill --install` und füge den
+   MCP-Server mit `claude mcp add dna -- dna mcp serve --env ote` hinzu.
+3. Fordere mich nicht auf, meinen API-Key in diesen Chat einzufügen. Sag mir, dass ich
+   `dna auth login --env ote` selbst ausführen soll, und prüfe dann die Verbindung mit
+   `dna --ote account get`.
+Arbeite nur in der OTE-Testumgebung und verwende `--yes` niemals ohne meine Freigabe.
+```
+
+**dna in ChatGPT Codex einrichten**
+
+```text
+Richte die dna CLI für mich ein (https://github.com/domainreseller/cli).
+1. Installiere sie mit dem offiziellen Installationsskript für mein Betriebssystem und
+   führe dann `dna version` und `dna doctor` aus.
+2. Trage sie in meiner Codex-Konfiguration (`~/.codex/config.toml`) als MCP-Server mit
+   dem Namen `dna`, dem Befehl `dna` und den Argumenten `mcp serve --env ote` ein.
+3. Fordere mich nicht auf, meinen API-Key in diesen Chat einzufügen. Sag mir, dass ich
+   `dna auth login --env ote` selbst ausführen soll, und prüfe dann die Verbindung mit
+   `dna --ote account get`.
+Arbeite nur in der OTE-Testumgebung und verwende `--yes` niemals ohne meine Freigabe.
+```
+
+**Kein Terminal? Fragen Sie ChatGPT oder Claude im Chat**
+
+```text
+Lies https://raw.githubusercontent.com/domainreseller/cli/main/llms.txt und die dort
+verlinkte dna-Dokumentation. Gib mir dann Schritt für Schritt die genauen dna-Befehle,
+um eine Domain in der OTE-Testumgebung zu registrieren: installieren, anmelden,
+suchen, mit `--dry-run` als Vorschau anzeigen und registrieren. Erkläre, was jeder
+Befehl macht.
+```
+
+<details>
+<summary><b>Weitere Prompts für die tägliche Arbeit</b></summary>
+<br>
+
+**Domain finden und registrieren**
+
+```text
+Prüfe mit dna, ob brandname.com, brandname.net und brandname.io verfügbar sind. Zeig
+die Ergebnisse mit Preisen in einer Tabelle und zeig dann mit `--dry-run` eine
+Vorschau der Registrierung für die günstigste verfügbare Domain. Registriere nichts,
+bevor ich Ja sage.
+```
+
+**Anstehende Verlängerungen**
+
+```text
+Liste mit dna meine Domains auf, die in den nächsten 60 Tagen ablaufen, mit ihren
+Verlängerungspreisen und sortiert nach Ablaufdatum. Verlängere nichts.
+```
+
+**Domain auf einen Server zeigen lassen**
+
+```text
+Lass example.com mit dna auf 203.0.113.10 zeigen: Lege A-Records für `@` und `www` an
+und zeig mir anschließend die finale DNS-Zone. Frag mich, bevor du einen bestehenden
+Eintrag änderst oder löschst.
+```
+
+**Domain in Ihr Konto transferieren**
+
+```text
+Prüfe mit dna, ob example.org in mein Konto transferiert werden kann, sag mir, was ich
+noch brauche (Auth-Code, Entsperrung), und zeig mit `--dry-run` eine Vorschau des
+Transfers.
+```
+
+**SSL-Zertifikat bestellen**
+
+```text
+Finde mit dna das günstigste DV-SSL-Zertifikat für example.com, erstelle einen CSR und
+zeig mir eine Vorschau der Bestellung. Warte vor dem Kauf auf meine Freigabe.
+```
+
+</details>
 
 ## <img src="./assets/h-flow.svg" width="30" height="30" alt=""> So funktioniert es
 

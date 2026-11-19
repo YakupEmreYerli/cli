@@ -102,6 +102,8 @@ dna auth login
 dna domain list
 ```
 
+<a id="connect-your-ai-agent"></a>
+
 ## <img src="./assets/h-mcp.svg" width="30" height="30" alt=""> Connectez votre agent IA
 
 <img src="./assets/fr/mcp.svg" width="1200" alt="Model Context Protocol : dna mcp serve expose 65 outils avec des annotations de sécurité. Un appel d'outil facturable sans confirmation renvoie un aperçu ; avec confirm=true après approbation, il s'exécute.">
@@ -175,6 +177,97 @@ dna mcp serve --read-only            # consulter sans rien modifier
 dna mcp serve --no-billable          # tout sauf les achats
 dna mcp serve --groups domain,dns    # uniquement ces groupes de commandes
 ```
+
+<a id="ready-made-prompts"></a>
+
+## <img src="./assets/h-prompt.svg" width="30" height="30" alt=""> Prompts prêts à l'emploi pour Claude et ChatGPT
+
+Copiez un prompt, collez-le dans votre assistant IA et laissez-le faire le travail. Chaque prompt commence dans l'environnement de test OTE et s'arrête pour attendre votre accord avant toute opération payante.
+
+**Installer dna dans Claude Code**
+
+```text
+Mets en place la CLI dna pour moi (https://github.com/domainreseller/cli).
+1. Installe-la avec le script d'installation officiel pour mon système d'exploitation,
+   puis lance `dna version` et `dna doctor`.
+2. Installe le skill Claude Code avec `dna agent skill --install` et ajoute le serveur
+   MCP avec `claude mcp add dna -- dna mcp serve --env ote`.
+3. Ne me demande pas de coller ma clé API dans cette conversation. Dis-moi de lancer
+   moi-même `dna auth login --env ote`, puis vérifie la connexion avec
+   `dna --ote account get`.
+Travaille uniquement dans l'environnement de test OTE et n'utilise jamais `--yes` sans
+mon accord.
+```
+
+**Installer dna dans ChatGPT Codex**
+
+```text
+Mets en place la CLI dna pour moi (https://github.com/domainreseller/cli).
+1. Installe-la avec le script d'installation officiel pour mon système d'exploitation,
+   puis lance `dna version` et `dna doctor`.
+2. Ajoute-la à ma config Codex (`~/.codex/config.toml`) comme serveur MCP nommé `dna`,
+   avec la commande `dna` et les arguments `mcp serve --env ote`.
+3. Ne me demande pas de coller ma clé API dans cette conversation. Dis-moi de lancer
+   moi-même `dna auth login --env ote`, puis vérifie la connexion avec
+   `dna --ote account get`.
+Travaille uniquement dans l'environnement de test OTE et n'utilise jamais `--yes` sans
+mon accord.
+```
+
+**Pas de terminal ? Passez par le chat de ChatGPT ou de Claude**
+
+```text
+Lis https://raw.githubusercontent.com/domainreseller/cli/main/llms.txt et la
+documentation dna vers laquelle il renvoie. Ensuite, donne-moi les commandes dna
+exactes, étape par étape, pour enregistrer un domaine dans l'environnement de test OTE
+: installation, connexion, recherche, prévisualisation avec `--dry-run` et
+enregistrement. Explique ce que fait chaque commande.
+```
+
+<details>
+<summary><b>D'autres prompts pour le travail au quotidien</b></summary>
+<br>
+
+**Trouver et enregistrer un domaine**
+
+```text
+Avec dna, vérifie si brandname.com, brandname.net et brandname.io sont disponibles.
+Affiche les résultats avec les prix dans un tableau, puis prévisualise avec
+`--dry-run` l'enregistrement du moins cher des domaines disponibles. N'enregistre rien
+tant que je n'ai pas dit oui.
+```
+
+**Renouvellements à venir**
+
+```text
+Avec dna, liste mes domaines qui expirent dans les 60 prochains jours avec leur prix
+de renouvellement, triés par date d'expiration. Ne renouvelle rien.
+```
+
+**Faire pointer un domaine vers un serveur**
+
+```text
+Avec dna, fais pointer example.com vers 203.0.113.10 : ajoute des enregistrements A
+pour `@` et `www`, puis montre-moi la zone DNS finale. Demande-moi avant de modifier
+ou de supprimer le moindre enregistrement existant.
+```
+
+**Transférer un domaine vers votre compte**
+
+```text
+Avec dna, vérifie si example.org peut être transféré vers mon compte, dis-moi ce qu'il
+me manque encore (code d'autorisation, déverrouillage) et prévisualise le transfert
+avec `--dry-run`.
+```
+
+**Commander un certificat SSL**
+
+```text
+Avec dna, trouve le certificat DV SSL le moins cher pour example.com, crée un CSR et
+prévisualise la commande. Attends mon accord avant d'acheter.
+```
+
+</details>
 
 ## <img src="./assets/h-flow.svg" width="30" height="30" alt=""> Fonctionnement
 

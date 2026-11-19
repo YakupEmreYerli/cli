@@ -102,6 +102,8 @@ dna auth login
 dna domain list
 ```
 
+<a id="connect-your-ai-agent"></a>
+
 ## <img src="./assets/h-mcp.svg" width="30" height="30" alt=""> Collega il tuo agente AI
 
 <img src="./assets/it/mcp.svg" width="1200" alt="Model Context Protocol: dna mcp serve espone 65 strumenti con annotazioni di sicurezza. Una chiamata a uno strumento a pagamento senza conferma restituisce un'anteprima; con confirm=true, dopo l'approvazione, viene eseguita.">
@@ -175,6 +177,96 @@ dna mcp serve --read-only            # guardare, non toccare
 dna mcp serve --no-billable          # tutto tranne gli acquisti
 dna mcp serve --groups domain,dns    # solo questi gruppi di comandi
 ```
+
+<a id="ready-made-prompts"></a>
+
+## <img src="./assets/h-prompt.svg" width="30" height="30" alt=""> Prompt pronti all'uso per Claude e ChatGPT
+
+Copia un prompt, incollalo nel tuo assistente IA e lascia che faccia il lavoro. Ogni prompt inizia nell'ambiente di test OTE e si ferma in attesa della tua approvazione prima di qualsiasi operazione a pagamento.
+
+**Configura dna in Claude Code**
+
+```text
+Configurami la CLI dna (https://github.com/domainreseller/cli).
+1. Installala con lo script di installazione ufficiale per il mio sistema operativo,
+   poi esegui `dna version` e `dna doctor`.
+2. Installa la skill di Claude Code con `dna agent skill --install` e aggiungi il
+   server MCP con `claude mcp add dna -- dna mcp serve --env ote`.
+3. Non chiedermi di incollare la mia chiave API in questa chat. Dimmi di eseguire
+   personalmente `dna auth login --env ote`, poi verifica la connessione con
+   `dna --ote account get`.
+Lavora solo nell'ambiente di test OTE e non usare mai `--yes` senza la mia
+approvazione.
+```
+
+**Configura dna in ChatGPT Codex**
+
+```text
+Configurami la CLI dna (https://github.com/domainreseller/cli).
+1. Installala con lo script di installazione ufficiale per il mio sistema operativo,
+   poi esegui `dna version` e `dna doctor`.
+2. Aggiungila alla mia configurazione di Codex (`~/.codex/config.toml`) come server
+   MCP chiamato `dna`, con il comando `dna` e gli argomenti `mcp serve --env ote`.
+3. Non chiedermi di incollare la mia chiave API in questa chat. Dimmi di eseguire
+   personalmente `dna auth login --env ote`, poi verifica la connessione con
+   `dna --ote account get`.
+Lavora solo nell'ambiente di test OTE e non usare mai `--yes` senza la mia
+approvazione.
+```
+
+**Niente terminale? Chiedi a ChatGPT o a Claude in chat**
+
+```text
+Leggi https://raw.githubusercontent.com/domainreseller/cli/main/llms.txt e la
+documentazione di dna a cui rimanda. Poi dammi i comandi dna esatti, passo dopo passo,
+per registrare un dominio nell'ambiente di test OTE: installazione, accesso, ricerca,
+anteprima con `--dry-run` e registrazione. Spiega cosa fa ogni comando.
+```
+
+<details>
+<summary><b>Altri prompt per il lavoro di tutti i giorni</b></summary>
+<br>
+
+**Trova e registra un dominio**
+
+```text
+Con dna, controlla se brandname.com, brandname.net e brandname.io sono disponibili.
+Mostra i risultati con i prezzi in una tabella, poi fai l'anteprima della
+registrazione del più economico tra quelli disponibili con `--dry-run`. Non registrare
+nulla finché non ti dico di sì.
+```
+
+**Prossimi rinnovi**
+
+```text
+Con dna, elenca i miei domini che scadono nei prossimi 60 giorni con i prezzi di
+rinnovo, ordinati per data di scadenza. Non rinnovare nulla.
+```
+
+**Fai puntare un dominio a un server**
+
+```text
+Con dna, fai puntare example.com a 203.0.113.10: aggiungi record A per `@` e `www`,
+poi mostrami la zona DNS finale. Chiedimi prima di modificare o eliminare qualsiasi
+record esistente.
+```
+
+**Trasferisci un dominio sul tuo account**
+
+```text
+Con dna, controlla se example.org può essere trasferito sul mio account, dimmi cosa mi
+serve ancora (codice di autorizzazione, sblocco) e fai l'anteprima del trasferimento
+con `--dry-run`.
+```
+
+**Ordina un certificato SSL**
+
+```text
+Con dna, trova il certificato DV SSL più economico per example.com, crea una CSR e fai
+l'anteprima dell'ordine. Aspetta la mia approvazione prima di acquistare.
+```
+
+</details>
 
 ## <img src="./assets/h-flow.svg" width="30" height="30" alt=""> Come funziona
 
