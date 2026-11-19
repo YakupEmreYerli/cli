@@ -10,7 +10,7 @@ go install github.com/domainreseller/cli/cmd/dna@latest   # Go 1.26+
 ```
 
 …or download a binary from the [releases page](https://github.com/domainreseller/cli/releases/latest), or run
-`scripts/install.sh` / `scripts/install.ps1` (see the [README](../README.md#install)). Then:
+`scripts/install.sh` / `scripts/install.ps1` (see the [README](../README.md)). Then:
 
 ```bash
 dna version

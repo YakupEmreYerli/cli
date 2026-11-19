@@ -47,6 +47,8 @@ See [docs/architecture.md](docs/architecture.md). In short:
 - **Generated files: do not edit by hand.**
   - `docs/reference/*`, `docs/enums.md` and `skills/dna/SKILL.md` come from `make docs`.
   - Regenerate them after changing the spec, the registry, enums or command help, and commit the result.
+  - The README animations (`assets/*.svg` and their translations in `assets/<lang>/`), the language buttons (`assets/lang/`) and most `h-*.svg` icons come from `python scripts/readme-assets/build_assets.py`. Edit the script and `strings.py` (animation texts per language), not the SVGs. The `btn-*`, `pill-*`, `h-key`, `h-faq`, `h-flow` and `h-connect` icons are copied from the domainreseller profile repository.
+- **README translations:** `README.md` is the source; keep the eight `README-XX.md` translations and the animation texts in `scripts/readme-assets/strings.py` in sync when it changes.
 - **New API operation:**
   - add a registry entry (ID, method, path, summary, safety)
   - add an enum if the API added one

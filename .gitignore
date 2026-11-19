@@ -18,3 +18,7 @@ dna-test-build
 *.swp
 .DS_Store
 Thumbs.db
+
+# README asset fonts (downloaded by scripts/readme-assets)
+scripts/readme-assets/.fonts/
+__pycache__/

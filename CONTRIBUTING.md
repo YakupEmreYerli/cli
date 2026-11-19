@@ -33,6 +33,8 @@ Read [docs/architecture.md](docs/architecture.md) first. Most changes fall into 
 | API changes | `make spec`, then registry entries and enums (the tests tell you what is missing) |
 | output formats | `internal/output` |
 | MCP | `internal/mcp` |
+| README animations and language buttons (`assets/`) | `scripts/readme-assets/build_assets.py` (layout) and `strings.py` (texts per language), then run it (needs `pip install fonttools`) |
+| README text | `README.md` first, then the same change in every `README-XX.md` translation |
 
 ## Pull requests
 

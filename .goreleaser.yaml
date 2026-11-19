@@ -30,7 +30,7 @@ archives:
     name_template: "dna_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     files:
       - README.md
-      - README.tr.md
+      - README-*.md
       - LICENSE
       - CHANGELOG.md
 
