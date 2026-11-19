@@ -10,6 +10,8 @@
 
 All three are generated from the same operation registry, so they always describe the installed version exactly.
 
+**Fastest start:** copy one of the [ready-made prompts](#ready-made-prompts) into Claude Code, Codex, ChatGPT or Claude chat and let the assistant set dna up for you.
+
 ## Guarantees an agent can rely on
 
 | property | detail |
@@ -153,11 +155,93 @@ and `dna schema domain.register` returns `inputSchema` (JSON Schema), `example` 
 echo '{"domainName":"example.com"}' | dna domain search --body - -o json
 ```
 
-## Example prompts
+<a id="ready-made-prompts"></a>
 
-Copy-paste prompts for setting up dna in Claude Code or Codex, and for everyday tasks, are in the README under [Ready-made prompts](../README.md#ready-made-prompts) (also translated in every README language). A few more ideas:
+## Ready-made prompts for Claude and ChatGPT
 
-- "Using the dna tools on OTE, check whether *brandname* is available as .com, .net and .com.tr and show prices."
-- "List my domains that expire within 45 days and check whether each can be renewed. Don't renew anything."
-- "Point www.example.com to 192.0.2.10 with a 5 minute TTL and show me the zone afterwards."
-- "Enable DNSSEC for example.com with this DS record: 2371 13 2 1F98…"
+Copy a prompt, paste it into your AI assistant and let it do the work. Every prompt starts in the OTE test environment and stops for your approval before anything billable.
+
+### Set up dna in Claude Code
+
+```text
+Set up the dna CLI for me (https://github.com/domainreseller/cli).
+1. Install it with the official install script for my operating system, then run
+   `dna version` and `dna doctor`.
+2. Install the Claude Code skill with `dna agent skill --install` and add the MCP
+   server with `claude mcp add dna -- dna mcp serve --env ote`.
+3. Don't ask me to paste my API key into this chat. Tell me to run
+   `dna auth login --env ote` myself, then check the connection with
+   `dna --ote account get`.
+Work only in the OTE test environment and never use `--yes` without my approval.
+```
+
+### Set up dna in ChatGPT Codex
+
+```text
+Set up the dna CLI for me (https://github.com/domainreseller/cli).
+1. Install it with the official install script for my operating system, then run
+   `dna version` and `dna doctor`.
+2. Add it to my Codex config (`~/.codex/config.toml`) as an MCP server named `dna`
+   with the command `dna` and the arguments `mcp serve --env ote`.
+3. Don't ask me to paste my API key into this chat. Tell me to run
+   `dna auth login --env ote` myself, then check the connection with
+   `dna --ote account get`.
+Work only in the OTE test environment and never use `--yes` without my approval.
+```
+
+### No terminal? Ask ChatGPT or Claude chat
+
+```text
+Read https://raw.githubusercontent.com/domainreseller/cli/main/llms.txt and the dna
+docs it links to. Then give me the exact dna commands, step by step, to register a
+domain in the OTE test environment: install, log in, search, preview with `--dry-run`
+and register. Explain what each command does.
+```
+
+### More prompts for everyday work
+
+#### Find and register a domain
+
+```text
+With dna, check whether brandname.com, brandname.net and brandname.io are available.
+Show the results with prices in a table, then preview the registration of the cheapest
+available one with `--dry-run`. Don't register anything until I say yes.
+```
+
+#### Upcoming renewals
+
+```text
+With dna, list my domains that expire in the next 60 days with their renewal prices,
+sorted by expiry date. Don't renew anything.
+```
+
+#### Point a domain to a server
+
+```text
+With dna, point example.com to 203.0.113.10: add A records for `@` and `www`, then
+show me the final DNS zone. Ask me before changing or deleting any existing record.
+```
+
+#### Transfer a domain in
+
+```text
+With dna, check whether example.org can be transferred to my account, tell me what I
+still need (auth code, unlocking) and preview the transfer with `--dry-run`.
+```
+
+#### Order an SSL certificate
+
+```text
+With dna, find the cheapest DV SSL certificate for example.com, create a CSR and
+preview the order. Wait for my approval before buying.
+```
+
+#### Enable DNSSEC
+
+```text
+With dna, show me the DNSSEC status of example.com, then add this DS record from my
+DNS provider: 2371 13 2 1F987CC6583E92DF0890718C42… Preview the change with
+`--dry-run` first and wait for my approval before applying it.
+```
+
+The same prompts, translated, are in every README language: [EN](../README.md#ready-made-prompts) · [TR](../README-TR.md#ready-made-prompts) · [DE](../README-DE.md#ready-made-prompts) · [AR](../README-SA.md#ready-made-prompts) · [NL](../README-NL.md#ready-made-prompts) · [AZ](../README-AZ.md#ready-made-prompts) · [ZH](../README-CN.md#ready-made-prompts) · [FR](../README-FR.md#ready-made-prompts) · [IT](../README-IT.md#ready-made-prompts)
