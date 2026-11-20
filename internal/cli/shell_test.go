@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"os/exec"
 	"path/filepath"
 	"reflect"
@@ -295,8 +296,14 @@ func TestShellLiveQuery(t *testing.T) {
 	if got := liveNames("acme.io"); got[0] != "acme.io" || strings.Contains(strings.Join(got[1:], " "), "acme.io") || len(got) > 8 {
 		t.Errorf("liveNames = %v", got)
 	}
-	if got := searchArgs("acme"); got[1] != "bulk-search" || got[2] != "acme.com" {
-		t.Errorf("searchArgs = %v", got)
+	if got := strings.Join(searchArgs("Acme"), " "); got != "domain search acme.com" {
+		t.Errorf("searchArgs(acme) = %v, want the .com alone", got)
+	}
+	if got := strings.Join(searchArgs("acme.io"), " "); got != "domain search acme.io" {
+		t.Errorf("searchArgs(acme.io) = %v", got)
+	}
+	if got := compareArgs("acme"); got[1] != "bulk-search" || got[2] != "acme.com" || len(got) != 2+len(popularTLDs) {
+		t.Errorf("compareArgs = %v", got)
 	}
 }
 
@@ -436,5 +443,54 @@ func TestMenuLabelsFitNarrow(t *testing.T) {
 		if strings.Contains(l, "Short") && !strings.Contains(l, "first descr") {
 			t.Errorf("a long label pushed the description off: %q", l)
 		}
+	}
+}
+
+// A name typed without an extension and Enter checks its .com alone: one
+// quick search, not all popular extensions (slow registries hold those).
+func TestShellEnterOnNameChecksCom(t *testing.T) {
+	api := newFakeAPI(t)
+	api.json("POST /api/v1/domains/search", `{"success":true,"info":{"domainName":"zqxw.com","status":"AVAILABLE","price":11.99,"currency":"USD","period":1}}`)
+	s := testShell(t, api, 100)
+	feed(s, s.submit("zqxw"))
+	var paths []string
+	for _, r := range api.all() {
+		paths = append(paths, r.Method+" "+r.Path+" "+r.Body)
+	}
+	got := strings.Join(paths, "\n")
+	if !strings.Contains(got, `POST /api/v1/domains/search {"domainName":"zqxw.com"}`) || strings.Contains(got, "bulk-search") {
+		t.Errorf("enter on a bare name should search the .com only, requests:\n%s", got)
+	}
+}
+
+// The live list shows the first name as soon as it answers, then the rest.
+func TestShellLiveQuickFirstName(t *testing.T) {
+	s := testShell(t, nil, 100)
+	s.in.SetValue("acme")
+	s.onInputChange()
+	seq := s.live.seq
+	s.live.busy = true
+	com := []map[string]any{{"domainName": "acme.com", "status": "AVAILABLE", "price": 11.99, "currency": "USD"}}
+	all := append(com, map[string]any{"domainName": "acme.net", "status": "NOTAVAILABLE"})
+
+	s.onLiveResult(liveResultMsg{seq: seq, query: "acme", results: com, partial: true})
+	if v := screen(s); !strings.Contains(v, "✓ acme.com") || !strings.Contains(v, "checking the other extensions") {
+		t.Errorf("the quick .com answer should show while the rest load:\n%s", v)
+	}
+	s.onLiveResult(liveResultMsg{seq: seq, query: "acme", results: all})
+	s.onLiveResult(liveResultMsg{seq: seq, query: "acme", results: com, partial: true}) // late: ignored
+	if len(s.live.results) != 2 || s.live.busy {
+		t.Errorf("the full list should replace the quick answer and stay, got %d results busy=%v", len(s.live.results), s.live.busy)
+	}
+	if v := screen(s); !strings.Contains(v, "1 free of 2") || !strings.Contains(v, "enter checks acme.com") {
+		t.Errorf("live view after the full list:\n%s", v)
+	}
+
+	// the bulk search fails after the quick answer: keep the .com
+	s.live.busy = true
+	s.onLiveResult(liveResultMsg{seq: seq, query: "acme", results: com, partial: true})
+	s.onLiveResult(liveResultMsg{seq: seq, query: "acme", err: context.DeadlineExceeded})
+	if v := screen(s); !strings.Contains(v, "✓ acme.com") || !strings.Contains(v, "the other extensions did not answer") {
+		t.Errorf("a failed bulk search should keep the .com answer:\n%s", v)
 	}
 }
