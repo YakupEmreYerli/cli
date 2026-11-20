@@ -92,9 +92,25 @@ func (s *shell) submit(line string) tea.Cmd {
 	return tea.Sequence(echo, tea.Println("  "+s.p.Fg(ui.Amber, "▲ ")+"Not a command or a domain name. Press "+s.p.Command("↓")+" on an empty line for quick actions, "+s.p.Command("/")+" for every command."))
 }
 
-// searchArgs checks a typed name: an exact domain, or a label across the
-// popular extensions.
+// searchArgs checks a name typed at the prompt. A name without an extension
+// means its .com: one search answers in about a second, while all popular
+// extensions at once wait for the slowest registry (close to a minute on
+// OTE). The live list under the prompt still shows the other extensions.
 func searchArgs(q string) []string {
+	return []string{"domain", "search", searchTarget(q)}
+}
+
+// searchTarget is the domain Enter checks for a typed name.
+func searchTarget(q string) string {
+	q = strings.ToLower(strings.TrimSuffix(q, "."))
+	if !strings.Contains(q, ".") {
+		q += ".com"
+	}
+	return q
+}
+
+// compareArgs checks a name across the popular extensions (/search).
+func compareArgs(q string) []string {
 	q = strings.ToLower(strings.TrimSuffix(q, "."))
 	if strings.Contains(q, ".") {
 		return []string{"domain", "search", q}
@@ -143,7 +159,7 @@ func init() {
 				s.notice = "Just type a name at the prompt: results appear while you type."
 				return nil
 			}
-			return s.runCommand(searchArgs(a))
+			return s.runCommand(compareArgs(a))
 		}},
 		{"/info", "<domain>", "Details of a domain", withDomain("Details of…", func(s *shell, d string) tea.Cmd {
 			return s.start([]string{"domain", "info", d}, "Reading "+d, runOpts{})

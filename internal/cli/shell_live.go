@@ -25,6 +25,8 @@ type liveState struct {
 	results []map[string]any
 	err     error
 	busy    bool
+	partial bool   // only the first name is in; the others are still coming
+	note    string // shown after the summary, e.g. when only the first name answered
 }
 
 type liveDebounceMsg struct {
@@ -37,6 +39,7 @@ type liveResultMsg struct {
 	query   string
 	results []map[string]any
 	err     error
+	partial bool // the quick answer for the first name alone
 }
 
 // liveQuery returns the name to check live, or "" when the input is a
@@ -73,13 +76,34 @@ func (s *shell) onLiveDebounce(m liveDebounceMsg) tea.Cmd {
 	if m.seq != s.live.seq || m.query != s.liveQuery() {
 		return nil // the user kept typing
 	}
-	s.live.busy = true
+	s.live.busy, s.live.partial, s.live.note = true, false, ""
 	c := s.app.child(nil, nil, 0)
 	if s.env != "" {
 		c.flags.env, c.flags.ote = s.env, false
 	}
 	names := liveNames(m.query)
-	return tea.Batch(s.tick(), func() tea.Msg {
+	// The first name (the .com, or the exact domain typed) is also checked on
+	// its own: one search answers in about a second, the bulk search waits
+	// for the slowest registry.
+	first := func() tea.Msg {
+		client, err := c.client()
+		if err != nil {
+			return nil // the bulk search reports it
+		}
+		var res struct {
+			Info map[string]any `json:"info"`
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+		defer cancel()
+		if _, err := client.Do(ctx, &dna.Request{Method: "POST", Path: "/api/v1/domains/search", Body: map[string]any{"domainName": names[0]}}, &res); err != nil || res.Info == nil {
+			return nil
+		}
+		if n, _ := res.Info["domainName"].(string); n == "" {
+			res.Info["domainName"] = names[0]
+		}
+		return liveResultMsg{seq: m.seq, query: m.query, results: []map[string]any{res.Info}, partial: true}
+	}
+	return tea.Batch(s.tick(), first, func() tea.Msg {
 		client, err := c.client()
 		if err != nil {
 			return liveResultMsg{seq: m.seq, query: m.query, err: err}
@@ -125,10 +149,23 @@ func (s *shell) onLiveResult(m liveResultMsg) {
 	if m.seq != s.live.seq {
 		return
 	}
+	if m.partial {
+		// show the quick answer only while the full list is still on its way
+		if s.live.busy {
+			s.live.query, s.live.results, s.live.err, s.live.partial = m.query, m.results, nil, true
+		}
+		return
+	}
 	s.live.busy = false
 	s.live.query = m.query
-	s.live.results, s.live.err = m.results, m.err
-	if s.liveSel >= len(m.results) {
+	if m.err != nil && s.live.partial && len(s.live.results) > 0 {
+		// the others did not answer in time: keep the one that did
+		s.live.note = "the other extensions did not answer"
+	} else {
+		s.live.results, s.live.err = m.results, m.err
+	}
+	s.live.partial = false
+	if s.liveSel >= len(s.live.results) {
 		s.liveSel = 0
 	}
 }
@@ -155,12 +192,16 @@ func (s *shell) liveView(w int) []string {
 	switch {
 	case s.live.busy || stale:
 		frame := ui.SpinnerFrames[s.frame%len(ui.SpinnerFrames)]
-		head += p.Fg(ui.Green, frame) + " " + p.Shimmer("checking "+q+" across popular extensions", s.frame)
+		what := "checking " + q + " across popular extensions"
+		if s.live.partial && !stale {
+			what = "checking the other extensions"
+		}
+		head += p.Fg(ui.Green, frame) + " " + p.Shimmer(what, s.frame)
 		if len(s.live.results) == 0 || stale {
 			return []string{head}
 		}
 	case s.live.err != nil:
-		return []string{head + p.Fg(ui.Amber, "▲ "+shortErr(s.live.err)), s.hint("enter to try the full search")}
+		return []string{head + p.Fg(ui.Amber, "▲ "+shortErr(s.live.err)), s.hint("enter checks " + searchTarget(q) + " on its own")}
 	default:
 		free := 0
 		for _, r := range s.live.results {
@@ -169,6 +210,9 @@ func (s *shell) liveView(w int) []string {
 			}
 		}
 		head += p.Bold(q) + p.Muted(" · ") + p.Fg(ui.Green, strconv.Itoa(free)+" free") + p.Muted(" of "+strconv.Itoa(len(s.live.results)))
+		if s.live.note != "" {
+			head += p.Muted(" · " + s.live.note)
+		}
 	}
 	cw := 0
 	for _, r := range s.live.results {
@@ -217,7 +261,7 @@ func (s *shell) liveView(w int) []string {
 	if focused {
 		lines = append(lines, s.hint("↑↓ choose · enter what next (register, transfer, …) · tab put it in the prompt · esc back"))
 	} else {
-		lines = append(lines, "  "+p.Fg(ui.Green, "↓")+p.Muted(" pick a result to register it  ·  enter compares them in full  ·  tab takes the first free one"))
+		lines = append(lines, "  "+p.Fg(ui.Green, "↓")+p.Muted(" pick a result to register it  ·  enter checks "+searchTarget(q)+"  ·  tab takes the first free one"))
 	}
 	return lines
 }
