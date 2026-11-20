@@ -5,6 +5,17 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-11-20
+
+### Fixed
+
+- Shell: a name typed without an extension and Enter (for example `acme`) checked all eight popular extensions at once,
+  and on OTE the shell waited close to a minute for the registries that do not answer. Enter now checks `acme.com` alone,
+  which answers in about a second. A name with an extension is checked as typed, and `/search acme` still compares the
+  popular extensions.
+- Shell: the live list under the prompt checks the first name (the `.com`, or the domain typed) on its own as well, so it
+  shows within a second while the other extensions load. If they do not answer in time, the `.com` stays with a note.
+
 ## [1.2.0] - 2026-11-20
 
 ### Added
