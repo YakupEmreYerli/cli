@@ -5,6 +5,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-22
+
 ### Changed
 
 - **Breaking, forced by the API:** the SSL API now identifies a certificate by its `certificateId` instead of the domain
