@@ -64,12 +64,12 @@ func Lookup(name string) (*Operation, bool) {
 // Groups returns the top-level command groups with a one-line description.
 func Groups() map[string]string {
 	return map[string]string{
-		"account": "Reseller account: balance and transactions",
+		"account": "Reseller account: profile, balance and transactions",
 		"contact": "Contact handles (registrant, admin, tech, billing)",
 		"domain":  "Search, register, renew, transfer and manage domains",
 		"dns":     "DNS zone records of domains on the platform nameservers",
 		"dnssec":  "DNSSEC (DS records) of domains",
-		"ssl":     "SSL certificates: buy, configure, issue, reissue, revoke",
+		"ssl":     "SSL certificates: buy, configure, issue, renew, reissue, revoke",
 		"hosting": "Web hosting packages and services",
 		"order":   "Orders",
 		"product": "Product catalogue and prices (TLDs, SSL, products)",
@@ -77,6 +77,12 @@ func Groups() map[string]string {
 }
 
 var domainArg = []string{"domainName"}
+
+// certArg addresses an existing certificate. A domain can have several
+// certificates, so the API takes the certificate's ID and nothing else.
+var certArg = []string{"certificateId"}
+
+const certificateIDHelp = "Certificate ID (GUID) from `dna ssl initialize`, `dna ssl renew` or `dna ssl list`"
 
 // contactFields mirrors the API's contact validation (create and update):
 // every field except company name, fax and disclose flag is required.
@@ -104,6 +110,14 @@ var registry = []*Operation{
 		Description: "Returns the reseller ID, name, group and the current TRY and USD balances. " +
 			"This is also the cheapest way to verify that credentials work.",
 		Examples: []Example{{"dna account get", "Show balances"}, {"dna account get --jq .usdBalance", "Print only the USD balance"}},
+	},
+	{
+		ID: "account.profile", Method: "GET", Path: "/api/v1/resellers/me", Safety: Read,
+		Summary: "Show the reseller profile (name, group, currency, status, MCP access)",
+		Description: "Returns who the credentials belong to: reseller ID and number, name, company, price group, account currency, " +
+			"status, whether it is a sub-reseller, whether the balance is suspended and whether MCP access is switched on in the reseller panel. " +
+			"For balances use `dna account get`.",
+		Examples: []Example{{"dna account profile", "Show the profile"}, {"dna account profile --jq .isMcpEnabled", "Is MCP access switched on?"}},
 	},
 	{
 		ID: "account.transactions", Method: "GET", Path: "/api/v1/deposit/transactions", Safety: Read,
@@ -474,6 +488,18 @@ var registry = []*Operation{
 
 	// ------------------------------------------------------------------ ssl
 	{
+		ID: "ssl.list", Method: "GET", Path: "/api/v1/ssls", Safety: Read, Args: domainArg,
+		Summary: "List your certificates and their IDs",
+		Description: "Newest first. A domain can have several certificates (a renewal next to the certificate it renews, cancelled ones), " +
+			"so every command that works on an existing certificate takes its certificateId. This is where to look it up.",
+		Fields:  map[string]Field{"domainName": {Optional: true, Help: "Only certificates of this domain (a wildcard matches with and without `*.`)"}},
+		Columns: []string{"certificateId", "domainName", "packageCode", "status", "isIssued", "subscriptionExpiresAt"},
+		Examples: []Example{
+			{"dna ssl list", "Every certificate"},
+			{"dna ssl list example.com --jq '.items[].certificateId'", "The certificate IDs of one domain"},
+		},
+	},
+	{
 		ID: "ssl.generate-csr", Method: "POST", Path: "/api/v1/ssls/generate-csr", Safety: Read, Args: domainArg,
 		Summary:     "Generate a CSR and private key",
 		Description: "Returns a CSR and its private key. Store the private key safely: it is needed to install the certificate.",
@@ -488,17 +514,30 @@ var registry = []*Operation{
 	},
 	{
 		ID: "ssl.initialize", Method: "POST", Path: "/api/v1/ssls/initialize", Safety: Billable, Args: domainArg,
-		Summary:     "Buy an SSL certificate package for a domain (charges balance)",
-		Description: "Find package codes with `dna product ssls`. Then run `dna ssl configure`.",
-		Fields:      map[string]Field{"domainName": {Required: true}, "packageCode": {Required: true, Help: "SSL product code from `dna product ssls`"}},
+		Summary: "Buy an SSL certificate package for a domain (charges balance)",
+		Description: "Find package codes with `dna product ssls`. Keep the certificateId from the response: every later command needs it. " +
+			"Then run `dna ssl configure` within 15 days. To renew a certificate use `dna ssl renew`, not a second purchase.",
+		Fields:   map[string]Field{"domainName": {Required: true}, "packageCode": {Required: true, Help: "SSL product code from `dna product ssls`"}},
+		Examples: []Example{{"dna ssl initialize example.com --package-code positivessl --dry-run", "Preview the purchase"}},
 	},
 	{
-		ID: "ssl.configure", Method: "PUT", Path: "/api/v1/ssls/configure", Safety: Write, Args: domainArg,
+		ID: "ssl.renew", Method: "POST", Path: "/api/v1/ssls/renew", Safety: Billable, Args: certArg, Prepare: prepareCertificateID,
+		Summary: "Renew a certificate for another year (charges balance)",
+		Description: "Opens a new order linked to the certificate and charges the renewal price. The response carries the certificateId of the " +
+			"new certificate: configure that one with `dna ssl configure`. The old certificate stays valid until it expires and becomes Renewed " +
+			"once the new one is active. Renewal opens 30 days before the subscription ends. Repeating the command while the renewal is still " +
+			"waiting for configuration returns the same renewal and does not charge again.",
+		Fields:   map[string]Field{"certificateId": {Help: "ID of the certificate to renew, from `dna ssl list`"}},
+		Examples: []Example{{"dna ssl renew 3fa85f64-5717-4562-b3fc-2c963f66afa6 --dry-run", "Preview the renewal"}},
+	},
+	{
+		ID: "ssl.configure", Method: "PUT", Path: "/api/v1/ssls/configure", Safety: Write, Args: certArg, Prepare: prepareCertificateID,
 		Summary: "Submit CSR, validation method and contact for issuance",
-		Description: "approverMail, authenticationType and webServerType are required for SSL packages. List valid approver addresses with " +
-			"`dna ssl approvers`. Then poll `dna ssl status` until the certificate is issued.",
+		Description: "The common name of the CSR must match the certificate's domain. approverMail, authenticationType and webServerType are " +
+			"required for SSL packages. List valid approver addresses with `dna ssl approvers`. Then poll `dna ssl status` until the certificate is issued.",
 		Flatten: map[string]string{"contact": "contact-"},
 		Fields: map[string]Field{
+			"certificateId":      {Help: certificateIDHelp},
 			"csr":                {File: true, Help: "PEM-encoded CSR"},
 			"privateKey":         {File: true, Help: "PEM-encoded private key (optional when the CSR was generated elsewhere)"},
 			"authenticationType": {Help: "Domain validation method"},
@@ -506,34 +545,53 @@ var registry = []*Operation{
 			"sanList":            {Help: "Additional names, comma separated"},
 			"wildcardList":       {Help: "Wildcard names, comma separated"},
 		},
-		Examples: []Example{{"dna ssl configure example.com --csr @example.csr --approver-mail admin@example.com --authentication-type Email --web-server-type Apache --body @ssl-contact.json", ""}},
+		Examples: []Example{{"dna ssl configure 3fa85f64-5717-4562-b3fc-2c963f66afa6 --csr @example.csr --approver-mail admin@example.com --authentication-type Email --web-server-type Apache --body @ssl-contact.json", ""}},
 	},
 	{
-		ID: "ssl.status", Method: "PUT", Path: "/api/v1/ssls/check-status", Safety: Read, Idempotent: true, Args: domainArg,
+		ID: "ssl.status", Method: "PUT", Path: "/api/v1/ssls/check-status", Safety: Read, Idempotent: true, Args: certArg, Prepare: prepareCertificateID,
 		Summary: "Refresh and show certificate status",
+		Fields:  map[string]Field{"certificateId": {Help: certificateIDHelp}},
 	},
 	{
-		ID: "ssl.get", Method: "GET", Path: "/api/v1/ssls/certificate", Safety: Read, Args: domainArg,
+		ID: "ssl.get", Method: "GET", Path: "/api/v1/ssls/certificate", Safety: Read, Args: certArg, Prepare: prepareCertificateID,
 		Summary: "Show certificate details (subscription, configuration, contacts)",
+		Fields:  map[string]Field{"certificateId": {Help: certificateIDHelp}},
 	},
 	{
-		ID: "ssl.content", Method: "GET", Path: "/api/v1/ssls/certificate-content", Safety: Read, Args: domainArg,
+		ID: "ssl.content", Method: "GET", Path: "/api/v1/ssls/certificate-content", Safety: Read, Args: certArg, Prepare: prepareCertificateID,
 		Summary:  "Download the issued certificate and chain (PEM)",
-		Examples: []Example{{"dna ssl content example.com --jq .certificate > example.crt", ""}},
+		Fields:   map[string]Field{"certificateId": {Help: certificateIDHelp}},
+		Examples: []Example{{"dna ssl content 3fa85f64-5717-4562-b3fc-2c963f66afa6 --jq .certificate > example.crt", ""}},
 	},
 	{
-		ID: "ssl.reissue", Method: "POST", Path: "/api/v1/ssls/reissue", Safety: Write, Args: domainArg,
+		ID: "ssl.reissue", Method: "POST", Path: "/api/v1/ssls/reissue", Safety: Write, Args: certArg, Prepare: prepareCertificateID,
 		Summary: "Reissue a certificate with a new CSR/key or approver",
-		Fields:  map[string]Field{"csr": {File: true, Help: "PEM-encoded CSR"}, "privateKey": {File: true, Help: "PEM-encoded private key"}},
+		Fields: map[string]Field{
+			"certificateId": {Help: certificateIDHelp},
+			"csr":           {File: true, Help: "PEM-encoded CSR"},
+			"privateKey":    {File: true, Help: "PEM-encoded private key"},
+		},
 	},
 	{
-		ID: "ssl.approvers", Method: "GET", Path: "/api/v1/ssls/approvers", Safety: Read, Args: domainArg,
+		ID: "ssl.approvers", Method: "GET", Path: "/api/v1/ssls/approvers", Safety: Read, Args: domainArg, Prepare: prepareApprovers,
 		Summary: "List e-mail addresses allowed for e-mail validation",
+		Description: "For a certificate you already bought, pass its certificateId. Before buying, pass the domain name and the package code " +
+			"you are about to buy.",
+		Fields: map[string]Field{
+			"certificateId": {Help: "Certificate ID of an existing certificate (its domain and package are used)"},
+			"domainName":    {Optional: true, Help: "Domain you are about to buy a certificate for (needs --package-code)"},
+			"packageCode":   {Help: "SSL product code you are about to buy, from `dna product ssls`"},
+		},
 		Columns: []string{"mails"},
+		Examples: []Example{
+			{"dna ssl approvers --certificate-id 3fa85f64-5717-4562-b3fc-2c963f66afa6", "For a certificate you bought"},
+			{"dna ssl approvers example.com --package-code positivessl", "Before buying"},
+		},
 	},
 	{
-		ID: "ssl.revoke", Method: "DELETE", Path: "/api/v1/ssls/revoke", Safety: Destructive, Args: domainArg,
+		ID: "ssl.revoke", Method: "DELETE", Path: "/api/v1/ssls/revoke", Safety: Destructive, Args: certArg, Prepare: prepareCertificateID,
 		Summary: "Revoke a certificate (irreversible)",
+		Fields:  map[string]Field{"certificateId": {Help: certificateIDHelp}},
 	},
 
 	// ------------------------------------------------------------------ hosting

@@ -184,7 +184,7 @@ def hero(lang):
         y += 38
     s.add(f'<path d="M{tx + 1} {ty + th - 34}h{tw - 2}" stroke="#3D4A6B" stroke-width="1"/>')
     s.add(f'<circle cx="{tx + 26}" cy="{ty + th - 17}" r="4" fill="{GREEN}" class="pu"/>')
-    s.add(s.text(tx + 38, ty + th - 13, 'ote sandbox   ·   65 MCP tools   ·   exit 0', 'R', 12, TERM_DIM))
+    s.add(s.text(tx + 38, ty + th - 13, 'ote sandbox   ·   68 MCP tools   ·   exit 0', 'R', 12, TERM_DIM))
     s.add('</g>')
     return write(lang, 'hero.svg', s)
 
@@ -199,7 +199,7 @@ def stats(lang):
     s.style(BASE_CSS)
     s.style('.rise{animation:rise 1.4s cubic-bezier(.15,.85,.25,1) both}@keyframes rise{from{transform:translateY(26px);opacity:0}}'
             '.bar{transform-box:fill-box;transform-origin:left;animation:bar 1.6s cubic-bezier(.2,.8,.2,1) both}@keyframes bar{from{transform:scaleX(0)}}')
-    nums = ['64', '65', '4', '6']
+    nums = ['67', '68', '4', '6']
     colors = [GREEN, PURPLE, AMBER, CYAN_D]
     tw, gap, x = 282, 14, 9
     for i, (num, (label, sub), color) in enumerate(zip(nums, t['stats'], colors)):

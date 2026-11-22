@@ -8,11 +8,12 @@ Global flags are listed in [cli.md](cli.md#global-flags).
 
 ## [account](account.md)
 
-Reseller account: balance and transactions.
+Reseller account: profile, balance and transactions.
 
 | command | safety | summary |
 |---|---|---|
 | [`dna account get`](account.md#dna-account-get) | read | Show the reseller account and its TRY/USD balances |
+| [`dna account profile`](account.md#dna-account-profile) | read | Show the reseller profile (name, group, currency, status, MCP access) |
 | [`dna account transactions`](account.md#dna-account-transactions) | read | List balance transactions (charges, refunds, deposits) |
 
 ## [contact](contact.md)
@@ -118,7 +119,7 @@ Product catalogue and prices (TLDs, SSL, products).
 
 ## [ssl](ssl.md)
 
-SSL certificates: buy, configure, issue, reissue, revoke.
+SSL certificates: buy, configure, issue, renew, reissue, revoke.
 
 | command | safety | summary |
 |---|---|---|
@@ -129,7 +130,9 @@ SSL certificates: buy, configure, issue, reissue, revoke.
 | [`dna ssl generate-csr`](ssl.md#dna-ssl-generate-csr) | read | Generate a CSR and private key |
 | [`dna ssl get`](ssl.md#dna-ssl-get) | read | Show certificate details (subscription, configuration, contacts) |
 | [`dna ssl initialize`](ssl.md#dna-ssl-initialize) | billable | Buy an SSL certificate package for a domain (charges balance) |
+| [`dna ssl list`](ssl.md#dna-ssl-list) | read | List your certificates and their IDs |
 | [`dna ssl reissue`](ssl.md#dna-ssl-reissue) | write | Reissue a certificate with a new CSR/key or approver |
+| [`dna ssl renew`](ssl.md#dna-ssl-renew) | billable | Renew a certificate for another year (charges balance) |
 | [`dna ssl revoke`](ssl.md#dna-ssl-revoke) | destructive | Revoke a certificate (irreversible) |
 | [`dna ssl status`](ssl.md#dna-ssl-status) | read | Refresh and show certificate status |
 

@@ -27,17 +27,17 @@
 
 <p align="center">
   <b>dna</b> pilote la plateforme revendeur <a href="https://www.domainnameapi.com">Domain Name API</a> depuis la ligne de commande et depuis des agents IA.
-  L'outil couvre les 64 opérations de l'API : recherche, enregistrement, renouvellement et transfert de domaines, DNS, DNSSEC, contacts, SSL et hébergement.
+  L'outil couvre les 67 opérations de l'API : recherche, enregistrement, renouvellement et transfert de domaines, DNS, DNSSEC, contacts, SSL et hébergement.
   Connectez-le à <b>Claude Code, Claude Desktop, Cursor, Codex</b> ou à tout client MCP, et chaque opération devient un outil sûr et clairement décrit.
 </p>
 
-<img src="./assets/fr/stats.svg" width="1200" alt="64 opérations d'API, 65 outils MCP pour les agents IA, 4 classes de sécurité appliquées, 6 plateformes avec un seul binaire.">
+<img src="./assets/fr/stats.svg" width="1200" alt="67 opérations d'API, 68 outils MCP pour les agents IA, 4 classes de sécurité appliquées, 6 plateformes avec un seul binaire.">
 
 ## <img src="./assets/h-agent.svg" width="30" height="30" alt=""> Conçu pour les agents IA
 
 |  | Ce qu'obtient un agent |
 |---|---|
-| 🧰 **Un outil par opération** | `dna mcp serve` expose 65 outils MCP dotés de JSON Schemas générés à partir de la spécification de l'API, afin que les modèles remplissent correctement les entrées du premier coup. |
+| 🧰 **Un outil par opération** | `dna mcp serve` expose 68 outils MCP dotés de JSON Schemas générés à partir de la spécification de l'API, afin que les modèles remplissent correctement les entrées du premier coup. |
 | 🛡️ **Une barrière de sécurité** | Les appels facturables et destructifs ne s'exécutent jamais d'eux-mêmes. La CLI exige `--yes`, MCP exige `confirm=true`, et sans cela l'agent reçoit un aperçu à vous présenter. |
 | 🧾 **Tout est lisible par machine** | Sortie JSON lorsque la sortie est redirigée vers un pipe, erreurs JSON avec des codes de sortie stables, `--dry-run` pour la requête exacte et `dna schema` pour chaque entrée. |
 | 🧪 **Un bac à sable** | `--env ote` pointe vers l'environnement de test : une vraie API, sans argent réel. `--read-only` bloque toute modification. |
@@ -127,7 +127,7 @@ Les scripts et les agents IA ne voient jamais le shell : redirigé ou lancé par
 
 ## <img src="./assets/h-mcp.svg" width="30" height="30" alt=""> Connectez votre agent IA
 
-<img src="./assets/fr/mcp.svg" width="1200" alt="Model Context Protocol : dna mcp serve expose 65 outils avec des annotations de sécurité. Un appel d'outil facturable sans confirmation renvoie un aperçu ; avec confirm=true après approbation, il s'exécute.">
+<img src="./assets/fr/mcp.svg" width="1200" alt="Model Context Protocol : dna mcp serve expose 68 outils avec des annotations de sécurité. Un appel d'outil facturable sans confirmation renvoie un aperçu ; avec confirm=true après approbation, il s'exécute.">
 
 > [!TIP]
 > **Le plus rapide :** lancez `dna`, appuyez sur ↓ et choisissez **Connect an AI agent** (ou tapez `/agent`). Choisissez l’un des plus de 20 agents, OTE ou production et ce qu’il a le droit de faire. dna lance la configuration ou s’ajoute au fichier de configuration de l’agent, vérifie les identifiants et copie pour vous des prompts prêts à l’emploi.
@@ -344,8 +344,8 @@ Les erreurs sont renvoyées en JSON sur stderr : `{"error":{"kind","code","messa
 | `dna domain` | recherche, recherche groupée, liste, informations, enregistrement, renouvellement, transfert, restauration, verrouillage, confidentialité, code d'autorisation, contacts, documents, redirection, serveurs de noms, hôtes enfants |
 | `dna dns` · `dna dnssec` | enregistrements de zone, enregistrements DS |
 | `dna contact` | handles de contact et vérification |
-| `dna ssl` | CSR, achat, configuration, statut, téléchargement, réémission, révocation |
-| `dna hosting` · `dna product` · `dna order` · `dna account` | hébergement, catalogue et prix, commandes, solde et transactions |
+| `dna ssl` | liste, CSR, achat, configuration, statut, téléchargement, renouvellement, réémission, révocation |
+| `dna hosting` · `dna product` · `dna order` · `dna account` | hébergement, catalogue et prix, commandes, profil, solde et transactions |
 | `dna api` | requête brute vers n'importe quel endpoint |
 | `dna schema` · `dna enums` · `dna agent` · `dna mcp` | pour les agents et les outils |
 | `dna auth` · `dna config` · `dna doctor` | identifiants, profils, diagnostics |

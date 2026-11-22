@@ -2,7 +2,7 @@
 
 # dna account
 
-Reseller account: balance and transactions.
+Reseller account: profile, balance and transactions.
 
 ## dna account get
 
@@ -35,6 +35,38 @@ Aliases: `balance`, `me`
 dna account get
 # Print only the USD balance
 dna account get --jq .usdBalance
+```
+
+## dna account profile
+
+```
+dna account profile [flags]
+```
+
+Show the reseller profile (name, group, currency, status, MCP access).
+
+Returns who the credentials belong to: reseller ID and number, name, company, price group, account
+currency, status, whether it is a sub-reseller, whether the balance is suspended and whether MCP
+access is switched on in the reseller panel. For balances use `dna account get`.
+
+- **Safety:** read-only (no side effects)
+- **API:** `GET /api/v1/resellers/me`
+- **Returns:** `ResellerMeDto`
+- **Schema:** `dna schema account.profile` (MCP tool: `account_profile`)
+
+Every input can also be given as JSON with --body (inline, @file or - for stdin); flags override it.
+
+| flag | type | description |
+|---|---|---|
+| `-d`, `--body` | string | Full input as JSON: inline, @file, or - to read stdin |
+
+**Examples**
+
+```bash
+# Show the profile
+dna account profile
+# Is MCP access switched on?
+dna account profile --jq .isMcpEnabled
 ```
 
 ## dna account transactions

@@ -27,17 +27,17 @@
 
 <p align="center">
   <b>dna</b> <a href="https://www.domainnameapi.com">Domain Name API</a> reseller platformasını komanda sətrindən və AI agentləri vasitəsilə idarə edir.
-  Bütün 64 API əməliyyatını əhatə edir: domen axtarışı, qeydiyyat, yenilənmə, transfer, DNS, DNSSEC, əlaqələr, SSL və hostinq.
+  Bütün 67 API əməliyyatını əhatə edir: domen axtarışı, qeydiyyat, yenilənmə, transfer, DNS, DNSSEC, əlaqələr, SSL və hostinq.
   Onu <b>Claude Code, Claude Desktop, Cursor, Codex</b> və ya istənilən MCP klientinə qoşun və hər əməliyyat təhlükəsiz, yaxşı təsvir edilmiş bir alətə çevrilsin.
 </p>
 
-<img src="./assets/az/stats.svg" width="1200" alt="64 API əməliyyatı, AI agentləri üçün 65 MCP aləti, 4 məcburi təhlükəsizlik sinfi, tək binar fayldan 6 platforma.">
+<img src="./assets/az/stats.svg" width="1200" alt="67 API əməliyyatı, AI agentləri üçün 68 MCP aləti, 4 məcburi təhlükəsizlik sinfi, tək binar fayldan 6 platforma.">
 
 ## <img src="./assets/h-agent.svg" width="30" height="30" alt=""> AI agentləri üçün hazırlanıb
 
 |  | Agent nə əldə edir |
 |---|---|
-| 🧰 **Hər əməliyyat üçün bir alət** | `dna mcp serve` API spesifikasiyasından yaradılmış JSON Schema-larla 65 MCP aləti təqdim edir, beləliklə modellər girişləri ilk cəhddən düzgün doldurur. |
+| 🧰 **Hər əməliyyat üçün bir alət** | `dna mcp serve` API spesifikasiyasından yaradılmış JSON Schema-larla 68 MCP aləti təqdim edir, beləliklə modellər girişləri ilk cəhddən düzgün doldurur. |
 | 🛡️ **Təhlükəsizlik qapısı** | Ödənişli və dağıdıcı çağırışlar heç vaxt öz-özünə icra olunmur. CLI üçün `--yes`, MCP üçün `confirm=true` tələb olunur; bunlar olmadan agent sizə göstərmək üçün önizləmə alır. |
 | 🧾 **Hər şey maşın tərəfindən oxuna bilir** | Pipe edildikdə JSON çıxışı, sabit çıxış kodları ilə JSON xətaları, dəqiq sorğunu görmək üçün `--dry-run` və hər giriş üçün `dna schema`. |
 | 🧪 **Sınaq mühiti** | `--env ote` test mühitinə yönəldir: real API, real pul yoxdur. `--read-only` hər dəyişikliyi bloklayır. |
@@ -127,7 +127,7 @@ Skriptlər və AI agentləri shell-i heç vaxt görmür: pipe ilə və ya agent 
 
 ## <img src="./assets/h-mcp.svg" width="30" height="30" alt=""> AI agentinizi qoşun
 
-<img src="./assets/az/mcp.svg" width="1200" alt="Model Context Protocol: dna mcp serve təhlükəsizlik annotasiyaları ilə 65 alət təqdim edir. confirm olmadan ödənişli alət çağırışı önizləmə qaytarır; təsdiqdən sonra confirm=true ilə icra olunur.">
+<img src="./assets/az/mcp.svg" width="1200" alt="Model Context Protocol: dna mcp serve təhlükəsizlik annotasiyaları ilə 68 alət təqdim edir. confirm olmadan ödənişli alət çağırışı önizləmə qaytarır; təsdiqdən sonra confirm=true ilə icra olunur.">
 
 > [!TIP]
 > **Ən sürətli yol:** `dna`-nı işə salın, ↓ basın və **Connect an AI agent** seçin (və ya `/agent` yazın). 20-dən çox agentdən birini, OTE və ya production mühitini və agentin nə qədər səlahiyyətli olacağını seçin. dna quraşdırmanı icra edir və ya özünü agentin konfiqurasiya faylına əlavə edir, giriş məlumatlarını yoxlayır və hazır promptları sizin üçün kopyalayır.
@@ -341,8 +341,8 @@ Xətalar stderr-də JSON formatında verilir: `{"error":{"kind","code","message"
 | `dna domain` | axtarış, toplu axtarış, siyahı, məlumat, qeydiyyat, yenilənmə, transfer, bərpa, kilid, məxfilik, auth kodu, əlaqələr, sənədlər, yönləndirmə, nameserver-lər, child host-lar |
 | `dna dns` · `dna dnssec` | zona qeydləri, DS qeydləri |
 | `dna contact` | əlaqə handle-ları və doğrulama |
-| `dna ssl` | CSR, alış, konfiqurasiya, status, yükləmə, yenidən buraxılış, ləğv |
-| `dna hosting` · `dna product` · `dna order` · `dna account` | hostinq, kataloq və qiymətlər, sifarişlər, balans və əməliyyatlar |
+| `dna ssl` | siyahı, CSR, alış, konfiqurasiya, status, yükləmə, yenilənmə, yenidən buraxılış, ləğv |
+| `dna hosting` · `dna product` · `dna order` · `dna account` | hostinq, kataloq və qiymətlər, sifarişlər, profil, balans və əməliyyatlar |
 | `dna api` | istənilən endpoint-ə xam sorğu |
 | `dna schema` · `dna enums` · `dna agent` · `dna mcp` | agentlər və alətlər üçün |
 | `dna auth` · `dna config` · `dna doctor` | giriş məlumatları, profillər, diaqnostika |

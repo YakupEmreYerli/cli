@@ -5,6 +5,29 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking, forced by the API:** the SSL API now identifies a certificate by its `certificateId` instead of the domain
+  name, because a domain can have several certificates. The API changed on 2026-11-20 in production and OTE, so the
+  affected commands of earlier versions no longer work.
+  - `ssl configure`, `ssl status`, `ssl get`, `ssl content`, `ssl reissue` and `ssl revoke` take the certificate ID as
+    their argument: `dna ssl status 3fa85f64-5717-4562-b3fc-2c963f66afa6`. The same goes for the MCP tools, whose
+    `domainName` input became `certificateId`.
+  - A domain name passed where the ID belongs is rejected before anything is sent (exit code 2), and the message says how
+    to find the ID: `dna ssl list example.com`.
+  - `ssl approvers` takes `--certificate-id` for a certificate you bought, or the domain name with `--package-code`
+    before buying. The package code is now required with a domain name.
+  - `ssl initialize` is unchanged. Keep the `certificateId` it returns.
+
+### Added
+
+- `ssl list [domain]` lists your certificates with their IDs, newest first.
+- `ssl renew <certificateId>` renews a certificate for another year at the renewal price (billable). It returns the ID
+  of the new certificate, which you then configure. Do not renew by buying again with `ssl initialize`.
+- `account profile` shows the reseller profile: name, company, price group, account currency, status and whether MCP
+  access is switched on in the reseller panel.
+- The `AccountCurrency` and `ResellerStatus` enums. dna now covers 67 API operations and exposes 68 MCP tools.
+
 ## [1.2.1] - 2026-11-20
 
 ### Fixed

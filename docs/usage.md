@@ -252,6 +252,7 @@ done
 # Check many names at once
 dna domain bulk-search brand.com brand.net brand.io --jq '.infos[] | "\(.domainName)\t\(.status)\t\(.price)"'
 
-# Save the issued certificate
-dna ssl content example.com --jq .certificate > example.crt
+# Save the issued certificate (certificates are addressed by ID, not by domain name)
+id=$(dna ssl list example.com --jq '.items[0].certificateId')
+dna ssl content "$id" --jq .certificate > example.crt
 ```

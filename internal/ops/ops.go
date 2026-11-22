@@ -52,7 +52,7 @@ type Field struct {
 	Short    string // one-letter shorthand
 	Help     string // flag/tool description
 	Required bool   // required even though the spec says optional
-	Optional bool   // optional even though the spec says required
+	Optional bool   // optional even though the spec says required; as a positional argument it is shown as [name]
 	Enum     string // enum (see dna.Enums) the value must belong to
 	EnumList bool   // value is a comma-separated list of Enum values
 	Split    bool   // split []string values on commas

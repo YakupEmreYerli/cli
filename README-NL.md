@@ -27,17 +27,17 @@
 
 <p align="center">
   <b>dna</b> bestuurt het resellerplatform van <a href="https://www.domainnameapi.com">Domain Name API</a> vanaf de opdrachtregel en vanuit AI-agents.
-  Het dekt alle 64 API-operaties: domeinen zoeken, registratie, verlenging, verhuizing, DNS, DNSSEC, contacten, SSL en hosting.
+  Het dekt alle 67 API-operaties: domeinen zoeken, registratie, verlenging, verhuizing, DNS, DNSSEC, contacten, SSL en hosting.
   Koppel het aan <b>Claude Code, Claude Desktop, Cursor, Codex</b> of een andere MCP-client, en elke operatie wordt een veilige, goed beschreven tool.
 </p>
 
-<img src="./assets/nl/stats.svg" width="1200" alt="64 API-operaties, 65 MCP-tools voor AI-agents, 4 afgedwongen veiligheidsklassen, 6 platforms vanuit één binary.">
+<img src="./assets/nl/stats.svg" width="1200" alt="67 API-operaties, 68 MCP-tools voor AI-agents, 4 afgedwongen veiligheidsklassen, 6 platforms vanuit één binary.">
 
 ## <img src="./assets/h-agent.svg" width="30" height="30" alt=""> Gebouwd voor AI-agents
 
 |  | Wat een agent krijgt |
 |---|---|
-| 🧰 **Eén tool per operatie** | `dna mcp serve` biedt 65 MCP-tools met JSON Schemas die uit de API-specificatie zijn opgebouwd, zodat modellen de invoer meteen de eerste keer correct invullen. |
+| 🧰 **Eén tool per operatie** | `dna mcp serve` biedt 68 MCP-tools met JSON Schemas die uit de API-specificatie zijn opgebouwd, zodat modellen de invoer meteen de eerste keer correct invullen. |
 | 🛡️ **Een veiligheidspoort** | Factureerbare en destructieve aanroepen worden nooit vanzelf uitgevoerd. De CLI vereist `--yes`, MCP vereist `confirm=true`, en zonder die bevestiging krijgt de agent een voorbeeld om aan jou te laten zien. |
 | 🧾 **Alles machineleesbaar** | JSON-uitvoer bij piping, JSON-fouten met stabiele exitcodes, `--dry-run` voor het exacte verzoek en `dna schema` voor elke invoer. |
 | 🧪 **Een sandbox** | `--env ote` wijst naar de testomgeving: echte API, geen echt geld. `--read-only` blokkeert elke wijziging. |
@@ -127,7 +127,7 @@ Scripts en AI-agents zien de shell nooit: via een pipe of gestart door een agent
 
 ## <img src="./assets/h-mcp.svg" width="30" height="30" alt=""> Verbind je AI-agent
 
-<img src="./assets/nl/mcp.svg" width="1200" alt="Model Context Protocol: dna mcp serve biedt 65 tools met veiligheidsannotaties. Een factureerbare tool-aanroep zonder confirm geeft een voorbeeld terug; met confirm=true na goedkeuring wordt hij uitgevoerd.">
+<img src="./assets/nl/mcp.svg" width="1200" alt="Model Context Protocol: dna mcp serve biedt 68 tools met veiligheidsannotaties. Een factureerbare tool-aanroep zonder confirm geeft een voorbeeld terug; met confirm=true na goedkeuring wordt hij uitgevoerd.">
 
 > [!TIP]
 > **De snelste weg:** start `dna`, druk op ↓ en kies **Connect an AI agent** (of typ `/agent`). Kies een van de meer dan 20 agents, OTE of productie en hoeveel hij mag doen. dna voert de installatie uit of voegt zichzelf toe aan het configuratiebestand van de agent, controleert de inloggegevens en kopieert kant-en-klare prompts voor je.
@@ -343,8 +343,8 @@ Fouten worden als JSON naar stderr geschreven: `{"error":{"kind","code","message
 | `dna domain` | zoeken, bulkzoeken, lijst, info, registreren, verlengen, verhuizen, herstellen, vergrendelen, privacy, authcode, contacten, documenten, doorsturen, nameservers, child hosts |
 | `dna dns` · `dna dnssec` | zonerecords, DS-records |
 | `dna contact` | contacthandles en verificatie |
-| `dna ssl` | CSR, kopen, configureren, status, downloaden, opnieuw uitgeven, intrekken |
-| `dna hosting` · `dna product` · `dna order` · `dna account` | hosting, catalogus en prijzen, bestellingen, saldo en transacties |
+| `dna ssl` | lijst, CSR, kopen, configureren, status, downloaden, verlengen, opnieuw uitgeven, intrekken |
+| `dna hosting` · `dna product` · `dna order` · `dna account` | hosting, catalogus en prijzen, bestellingen, profiel, saldo en transacties |
 | `dna api` | ruw verzoek naar elk endpoint |
 | `dna schema` · `dna enums` · `dna agent` · `dna mcp` | voor agents en tools |
 | `dna auth` · `dna config` · `dna doctor` | inloggegevens, profielen, diagnose |

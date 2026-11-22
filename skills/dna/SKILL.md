@@ -35,7 +35,10 @@ This guide is generated from the CLI itself, so it matches the installed version
    - Renew: `domain renew-check` -> approval -> `domain renew --period N --yes`.
    - Transfer in: `domain transfer-check <domain> <authcode>` -> approval -> `domain transfer --yes` -> `domain transfer-status`.
    - DNS: `dns list`, `dns add --name www --type A --content 192.0.2.1`, then `dns apply` if the domain is not on the platform nameservers.
-   - SSL: `product ssls` -> `ssl initialize` (billable) -> `ssl generate-csr` -> `ssl configure` -> `ssl status` -> `ssl content`.
+   - SSL: `product ssls` -> `ssl initialize` (billable; keep the `certificateId` it returns) -> `ssl generate-csr` ->
+     `ssl configure <certificateId>` -> `ssl status <certificateId>` -> `ssl content <certificateId>`. Commands on an existing certificate take
+     its ID, never the domain name: look it up with `ssl list <domain>`. Renew with `ssl renew <certificateId>` (billable), then
+     configure the new certificate it returns. Do not buy again with `ssl initialize` to renew.
 
 ## Exit codes
 
@@ -60,6 +63,7 @@ Error JSON (stderr): `{"error":{"kind","code","message","status","fields","hint"
 | command | safety | what it does |
 |---|---|---|
 | `dna account get` | read | Show the reseller account and its TRY/USD balances |
+| `dna account profile` | read | Show the reseller profile (name, group, currency, status, MCP access) |
 | `dna account transactions` | read | List balance transactions (charges, refunds, deposits) |
 | `dna contact create` | write | Create a reusable contact handle |
 | `dna contact get <handle>` | read | Show a contact handle and its verification state |
@@ -113,16 +117,18 @@ Error JSON (stderr): `{"error":{"kind","code","message","status","fields","hint"
 | `dna product list` | read | List products |
 | `dna product ssls` | read | List SSL certificate products with prices |
 | `dna product tlds` | read | List TLDs with prices, periods, rules and required attributes |
-| `dna ssl approvers <domain>` | read | List e-mail addresses allowed for e-mail validation |
+| `dna ssl approvers [domain]` | read | List e-mail addresses allowed for e-mail validation |
 | `dna ssl check-csr` | read | Decode a CSR and show its subject |
-| `dna ssl configure <domain>` | write | Submit CSR, validation method and contact for issuance |
-| `dna ssl content <domain>` | read | Download the issued certificate and chain (PEM) |
+| `dna ssl configure <certificate-id>` | write | Submit CSR, validation method and contact for issuance |
+| `dna ssl content <certificate-id>` | read | Download the issued certificate and chain (PEM) |
 | `dna ssl generate-csr <domain>` | read | Generate a CSR and private key |
-| `dna ssl get <domain>` | read | Show certificate details (subscription, configuration, contacts) |
+| `dna ssl get <certificate-id>` | read | Show certificate details (subscription, configuration, contacts) |
 | `dna ssl initialize <domain>` | billable | Buy an SSL certificate package for a domain (charges balance) |
-| `dna ssl reissue <domain>` | write | Reissue a certificate with a new CSR/key or approver |
-| `dna ssl revoke <domain>` | destructive | Revoke a certificate (irreversible) |
-| `dna ssl status <domain>` | read | Refresh and show certificate status |
+| `dna ssl list [domain]` | read | List your certificates and their IDs |
+| `dna ssl reissue <certificate-id>` | write | Reissue a certificate with a new CSR/key or approver |
+| `dna ssl renew <certificate-id>` | billable | Renew a certificate for another year (charges balance) |
+| `dna ssl revoke <certificate-id>` | destructive | Revoke a certificate (irreversible) |
+| `dna ssl status <certificate-id>` | read | Refresh and show certificate status |
 
 Contact book (on this computer, the API cannot list handles): `dna contact list [--scan]`, `dna contact default [handle]`,
 `dna contact forget <handle>`.

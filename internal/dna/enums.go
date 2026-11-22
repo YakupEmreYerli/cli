@@ -159,6 +159,8 @@ var enumFields = map[string]string{
 	"OrderProductDto.status":                     "OrderProductStatus",
 	"ProductDto.productType":                     "ProductType",
 	"ProductInfoDto.productType":                 "ProductType",
+	"ResellerMeDto.accountCurrency":              "AccountCurrency",
+	"ResellerMeDto.status":                       "ResellerStatus",
 	"SubproductDto.productType":                  "ProductType",
 }
 
@@ -195,6 +197,13 @@ var _ = intEnum("TransactionStatus", "Outcome of a balance transaction (AccountT
 
 var _ = intEnum("ChargeType", "Direction of a balance transaction (AccountTransactionDto.chargeType, filter `--charge-type`).",
 	ival(0, "Add"), ival(1, "Subtract"))
+
+var _ = intEnum("AccountCurrency", "Currency a reseller account is kept in (ResellerMeDto.accountCurrency).",
+	ival(1, "TRY"), ival(2, "USD"), ival(3, "EURO"))
+
+var _ = intEnum("ResellerStatus", "State of a reseller account (ResellerMeDto.status).",
+	ival(0, "Active"), ival(1, "WaitingForApproval", "E-mail or SMS verification pending"),
+	ival(2, "Suspend", "Access suspended"), ival(3, "WaitingForCompletionWizard", "Sign-up wizard not finished"))
 
 var _ = intEnum("ProductType", "Kind of product (productType fields; filter `product list --product-type`).",
 	ival(1, "Domain"), ival(2, "SSL"), ival(3, "Deposit"), ival(4, "DomainTrustee"), ival(5, "Hosting"), ival(6, "OwnerChange"))

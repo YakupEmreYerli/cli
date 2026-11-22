@@ -2,15 +2,18 @@
 
 # dna ssl
 
-SSL certificates: buy, configure, issue, reissue, revoke.
+SSL certificates: buy, configure, issue, renew, reissue, revoke.
 
 ## dna ssl approvers
 
 ```
-dna ssl approvers <domain> [flags]
+dna ssl approvers [domain] [flags]
 ```
 
 List e-mail addresses allowed for e-mail validation.
+
+For a certificate you already bought, pass its certificateId. Before buying, pass the domain name
+and the package code you are about to buy.
 
 - **Safety:** read-only (no side effects)
 - **API:** `GET /api/v1/ssls/approvers`
@@ -21,9 +24,19 @@ Every input can also be given as JSON with --body (inline, @file or - for stdin)
 
 | flag | type | description |
 |---|---|---|
-| `--domain-name` | string | Domain name (required; or argument 1 &lt;domain&gt;) |
-| `--package-code` | string | Package code |
+| `--domain-name` | string | Domain you are about to buy a certificate for (needs --package-code) (or argument 1 &lt;domain&gt;) |
+| `--certificate-id` | string | Certificate ID of an existing certificate (its domain and package are used) |
+| `--package-code` | string | SSL product code you are about to buy, from `dna product ssls` |
 | `-d`, `--body` | string | Full input as JSON: inline, @file, or - to read stdin |
+
+**Examples**
+
+```bash
+# For a certificate you bought
+dna ssl approvers --certificate-id 3fa85f64-5717-4562-b3fc-2c963f66afa6
+# Before buying
+dna ssl approvers example.com --package-code positivessl
+```
 
 ## dna ssl check-csr
 
@@ -55,14 +68,14 @@ dna ssl check-csr --csr @example.csr
 ## dna ssl configure
 
 ```
-dna ssl configure <domain> [flags]
+dna ssl configure <certificate-id> [flags]
 ```
 
 Submit CSR, validation method and contact for issuance.
 
-approverMail, authenticationType and webServerType are required for SSL packages. List valid
-approver addresses with `dna ssl approvers`. Then poll `dna ssl status` until the certificate is
-issued.
+The common name of the CSR must match the certificate's domain. approverMail, authenticationType and
+webServerType are required for SSL packages. List valid approver addresses with `dna ssl approvers`.
+Then poll `dna ssl status` until the certificate is issued.
 
 - **Safety:** changes data (free)
 - **API:** `PUT /api/v1/ssls/configure`
@@ -74,7 +87,7 @@ Every input can also be given as JSON with --body (inline, @file or - for stdin)
 
 | flag | type | description |
 |---|---|---|
-| `--domain-name` | string | Domain name (required; or argument 1 &lt;domain&gt;) |
+| `--certificate-id` | string | Certificate ID (GUID) from `dna ssl initialize`, `dna ssl renew` or `dna ssl list` (required; or argument 1 &lt;certificate-id&gt;) |
 | `--csr` | string | PEM-encoded CSR (@file reads a file) (required) |
 | `--contact-first-name` | string | First name (max 70 chars) (required) |
 | `--contact-last-name` | string | Last name (max 70 chars) (required) |
@@ -101,13 +114,13 @@ Every input can also be given as JSON with --body (inline, @file or - for stdin)
 **Examples**
 
 ```bash
-dna ssl configure example.com --csr @example.csr --approver-mail admin@example.com --authentication-type Email --web-server-type Apache --body @ssl-contact.json
+dna ssl configure 3fa85f64-5717-4562-b3fc-2c963f66afa6 --csr @example.csr --approver-mail admin@example.com --authentication-type Email --web-server-type Apache --body @ssl-contact.json
 ```
 
 ## dna ssl content
 
 ```
-dna ssl content <domain> [flags]
+dna ssl content <certificate-id> [flags]
 ```
 
 Download the issued certificate and chain (PEM).
@@ -121,13 +134,13 @@ Every input can also be given as JSON with --body (inline, @file or - for stdin)
 
 | flag | type | description |
 |---|---|---|
-| `--domain-name` | string | Domain name (required; or argument 1 &lt;domain&gt;) |
+| `--certificate-id` | string | Certificate ID (GUID) from `dna ssl initialize`, `dna ssl renew` or `dna ssl list` (required; or argument 1 &lt;certificate-id&gt;) |
 | `-d`, `--body` | string | Full input as JSON: inline, @file, or - to read stdin |
 
 **Examples**
 
 ```bash
-dna ssl content example.com --jq .certificate > example.crt
+dna ssl content 3fa85f64-5717-4562-b3fc-2c963f66afa6 --jq .certificate > example.crt
 ```
 
 ## dna ssl generate-csr
@@ -169,7 +182,7 @@ dna ssl generate-csr example.com --country TR --state Istanbul --locality Istanb
 ## dna ssl get
 
 ```
-dna ssl get <domain> [flags]
+dna ssl get <certificate-id> [flags]
 ```
 
 Show certificate details (subscription, configuration, contacts).
@@ -183,7 +196,7 @@ Every input can also be given as JSON with --body (inline, @file or - for stdin)
 
 | flag | type | description |
 |---|---|---|
-| `--domain-name` | string | Domain name (required; or argument 1 &lt;domain&gt;) |
+| `--certificate-id` | string | Certificate ID (GUID) from `dna ssl initialize`, `dna ssl renew` or `dna ssl list` (required; or argument 1 &lt;certificate-id&gt;) |
 | `-d`, `--body` | string | Full input as JSON: inline, @file, or - to read stdin |
 
 ## dna ssl initialize
@@ -194,7 +207,9 @@ dna ssl initialize <domain> [flags]
 
 Buy an SSL certificate package for a domain (charges balance).
 
-Find package codes with `dna product ssls`. Then run `dna ssl configure`.
+Find package codes with `dna product ssls`. Keep the certificateId from the response: every later
+command needs it. Then run `dna ssl configure` within 15 days. To renew a certificate use `dna ssl
+renew`, not a second purchase.
 
 - **Safety:** BILLABLE - charges your balance; asks for confirmation (--yes to skip)
 - **API:** `POST /api/v1/ssls/initialize`
@@ -210,10 +225,53 @@ Every input can also be given as JSON with --body (inline, @file or - for stdin)
 | `--package-code` | string | SSL product code from `dna product ssls` (required) |
 | `-d`, `--body` | string | Full input as JSON: inline, @file, or - to read stdin |
 
+**Examples**
+
+```bash
+# Preview the purchase
+dna ssl initialize example.com --package-code positivessl --dry-run
+```
+
+## dna ssl list
+
+```
+dna ssl list [domain] [flags]
+```
+
+List your certificates and their IDs.
+
+Newest first. A domain can have several certificates (a renewal next to the certificate it renews,
+cancelled ones), so every command that works on an existing certificate takes its certificateId.
+This is where to look it up.
+
+- **Safety:** read-only (no side effects)
+- **API:** `GET /api/v1/ssls`
+- **Returns:** `PagedResultDto<CertificateListItemDto>`
+- **Schema:** `dna schema ssl.list` (MCP tool: `ssl_list`)
+
+Every input can also be given as JSON with --body (inline, @file or - for stdin); flags override it.
+
+| flag | type | description |
+|---|---|---|
+| `--domain-name` | string | Only certificates of this domain (a wildcard matches with and without `*.`) (or argument 1 &lt;domain&gt;) |
+| `--skip-count` | int | Skip count |
+| `--max-result-count` | int | Max result count |
+| `-d`, `--body` | string | Full input as JSON: inline, @file, or - to read stdin |
+| `--all` |  | Fetch every page and return all items |
+
+**Examples**
+
+```bash
+# Every certificate
+dna ssl list
+# The certificate IDs of one domain
+dna ssl list example.com --jq '.items[].certificateId'
+```
+
 ## dna ssl reissue
 
 ```
-dna ssl reissue <domain> [flags]
+dna ssl reissue <certificate-id> [flags]
 ```
 
 Reissue a certificate with a new CSR/key or approver.
@@ -228,16 +286,50 @@ Every input can also be given as JSON with --body (inline, @file or - for stdin)
 
 | flag | type | description |
 |---|---|---|
-| `--domain-name` | string | Domain name (required; or argument 1 &lt;domain&gt;) |
+| `--certificate-id` | string | Certificate ID (GUID) from `dna ssl initialize`, `dna ssl renew` or `dna ssl list` (required; or argument 1 &lt;certificate-id&gt;) |
 | `--approver-mail` | string | Approver mail (e-mail) |
 | `--csr` | string | PEM-encoded CSR (@file reads a file) |
 | `--private-key` | string | PEM-encoded private key (@file reads a file) |
 | `-d`, `--body` | string | Full input as JSON: inline, @file, or - to read stdin |
 
+## dna ssl renew
+
+```
+dna ssl renew <certificate-id> [flags]
+```
+
+Renew a certificate for another year (charges balance).
+
+Opens a new order linked to the certificate and charges the renewal price. The response carries the
+certificateId of the new certificate: configure that one with `dna ssl configure`. The old
+certificate stays valid until it expires and becomes Renewed once the new one is active. Renewal
+opens 30 days before the subscription ends. Repeating the command while the renewal is still waiting
+for configuration returns the same renewal and does not charge again.
+
+- **Safety:** BILLABLE - charges your balance; asks for confirmation (--yes to skip)
+- **API:** `POST /api/v1/ssls/renew`
+- **Body:** `RenewCertificateInput`
+- **Returns:** `SslOperationResponse`
+- **Schema:** `dna schema ssl.renew` (MCP tool: `ssl_renew`)
+
+Every input can also be given as JSON with --body (inline, @file or - for stdin); flags override it.
+
+| flag | type | description |
+|---|---|---|
+| `--certificate-id` | string | ID of the certificate to renew, from `dna ssl list` (required; or argument 1 &lt;certificate-id&gt;) |
+| `-d`, `--body` | string | Full input as JSON: inline, @file, or - to read stdin |
+
+**Examples**
+
+```bash
+# Preview the renewal
+dna ssl renew 3fa85f64-5717-4562-b3fc-2c963f66afa6 --dry-run
+```
+
 ## dna ssl revoke
 
 ```
-dna ssl revoke <domain> [flags]
+dna ssl revoke <certificate-id> [flags]
 ```
 
 Revoke a certificate (irreversible).
@@ -251,13 +343,13 @@ Every input can also be given as JSON with --body (inline, @file or - for stdin)
 
 | flag | type | description |
 |---|---|---|
-| `--domain-name` | string | Domain name (required; or argument 1 &lt;domain&gt;) |
+| `--certificate-id` | string | Certificate ID (GUID) from `dna ssl initialize`, `dna ssl renew` or `dna ssl list` (required; or argument 1 &lt;certificate-id&gt;) |
 | `-d`, `--body` | string | Full input as JSON: inline, @file, or - to read stdin |
 
 ## dna ssl status
 
 ```
-dna ssl status <domain> [flags]
+dna ssl status <certificate-id> [flags]
 ```
 
 Refresh and show certificate status.
@@ -272,6 +364,6 @@ Every input can also be given as JSON with --body (inline, @file or - for stdin)
 
 | flag | type | description |
 |---|---|---|
-| `--domain-name` | string | Domain name (required; or argument 1 &lt;domain&gt;) |
+| `--certificate-id` | string | Certificate ID (GUID) from `dna ssl initialize`, `dna ssl renew` or `dna ssl list` (required; or argument 1 &lt;certificate-id&gt;) |
 | `-d`, `--body` | string | Full input as JSON: inline, @file, or - to read stdin |
 

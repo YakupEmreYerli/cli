@@ -122,7 +122,10 @@ This guide is generated from the CLI itself, so it matches the installed version
    - Renew: ` + "`domain renew-check`" + ` -> approval -> ` + "`domain renew --period N --yes`" + `.
    - Transfer in: ` + "`domain transfer-check <domain> <authcode>`" + ` -> approval -> ` + "`domain transfer --yes`" + ` -> ` + "`domain transfer-status`" + `.
    - DNS: ` + "`dns list`" + `, ` + "`dns add --name www --type A --content 192.0.2.1`" + `, then ` + "`dns apply`" + ` if the domain is not on the platform nameservers.
-   - SSL: ` + "`product ssls`" + ` -> ` + "`ssl initialize`" + ` (billable) -> ` + "`ssl generate-csr`" + ` -> ` + "`ssl configure`" + ` -> ` + "`ssl status`" + ` -> ` + "`ssl content`" + `.
+   - SSL: ` + "`product ssls`" + ` -> ` + "`ssl initialize`" + ` (billable; keep the ` + "`certificateId`" + ` it returns) -> ` + "`ssl generate-csr`" + ` ->
+     ` + "`ssl configure <certificateId>`" + ` -> ` + "`ssl status <certificateId>`" + ` -> ` + "`ssl content <certificateId>`" + `. Commands on an existing certificate take
+     its ID, never the domain name: look it up with ` + "`ssl list <domain>`" + `. Renew with ` + "`ssl renew <certificateId>`" + ` (billable), then
+     configure the new certificate it returns. Do not buy again with ` + "`ssl initialize`" + ` to renew.
 
 ## Exit codes
 
@@ -143,10 +146,7 @@ Error JSON (stderr): ` + "`{\"error\":{\"kind\",\"code\",\"message\",\"status\",
 	for _, op := range ops.All() {
 		cmd := "dna " + strings.Join(op.CommandPath(), " ")
 		for _, arg := range op.Args {
-			cmd += " <" + argName(strings.TrimSuffix(arg, "...")) + ">"
-			if strings.HasSuffix(arg, "...") {
-				cmd += "..."
-			}
+			cmd += " " + argUsage(op, arg)
 		}
 		fmt.Fprintf(&b, "| `%s` | %s | %s |\n", cmd, op.Safety, op.Summary)
 	}

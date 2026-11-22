@@ -92,7 +92,7 @@ If the client cannot find `dna`, use the absolute path of the binary as `command
 
 ### What the assistant gets
 
-- **One tool per API operation (64)**, named after the command: `domain_search`, `domain_register`, `dns_add`, `ssl_configure`, …
+- **One tool per API operation (67)**, named after the command: `domain_search`, `domain_register`, `dns_add`, `ssl_configure`, …
   - Each tool has a JSON Schema built from the API spec, with enum values, ranges and lengths.
   - Each tool carries MCP annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`).
 - **`dna_context`**: reports the environment (production or OTE), whether read-only mode is on, and which tools are enabled. It makes no API call.
