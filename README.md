@@ -27,17 +27,17 @@
 
 <p align="center">
   <b>dna</b> drives the <a href="https://www.domainnameapi.com">Domain Name API</a> reseller platform from the command line and from AI agents.
-  It covers all 64 API operations: domain search, registration, renewal, transfer, DNS, DNSSEC, contacts, SSL and hosting.
+  It covers all 67 API operations: domain search, registration, renewal, transfer, DNS, DNSSEC, contacts, SSL and hosting.
   Plug it into <b>Claude Code, Claude Desktop, Cursor, Codex</b> or any MCP client, and every operation becomes a safe, well-described tool.
 </p>
 
-<img src="./assets/stats.svg" width="1200" alt="64 API operations, 65 MCP tools for AI agents, 4 enforced safety classes, 6 platforms from one binary.">
+<img src="./assets/stats.svg" width="1200" alt="67 API operations, 68 MCP tools for AI agents, 4 enforced safety classes, 6 platforms from one binary.">
 
 ## <img src="./assets/h-agent.svg" width="30" height="30" alt=""> Built for AI agents
 
 |  | What an agent gets |
 |---|---|
-| 🧰 **One tool per operation** | `dna mcp serve` exposes 65 MCP tools with JSON Schemas built from the API spec, so models fill inputs correctly the first time. |
+| 🧰 **One tool per operation** | `dna mcp serve` exposes 68 MCP tools with JSON Schemas built from the API spec, so models fill inputs correctly the first time. |
 | 🛡️ **A safety gate** | Billable and destructive calls never run on their own. The CLI needs `--yes`, MCP needs `confirm=true`, and without it the agent gets a preview to show you. |
 | 🧾 **Machine-readable everything** | JSON output when piped, JSON errors with stable exit codes, `--dry-run` for the exact request, and `dna schema` for every input. |
 | 🧪 **A sandbox** | `--env ote` points at the test environment: real API, no real money. `--read-only` blocks every change. |
@@ -127,7 +127,7 @@ Scripts and AI agents never see the shell: piped, or run by an agent, `dna` prin
 
 ## <img src="./assets/h-mcp.svg" width="30" height="30" alt=""> Connect your AI agent
 
-<img src="./assets/mcp.svg" width="1200" alt="Model Context Protocol: dna mcp serve exposes 65 tools with safety annotations. A billable tool call without confirm returns a preview; with confirm=true after approval it runs.">
+<img src="./assets/mcp.svg" width="1200" alt="Model Context Protocol: dna mcp serve exposes 68 tools with safety annotations. A billable tool call without confirm returns a preview; with confirm=true after approval it runs.">
 
 > [!TIP]
 > **The quickest way:** run `dna`, press ↓ and choose **Connect an AI agent** (or type `/agent`). Pick one of 20+ agents, choose OTE or production and how much it may do. dna runs the setup or adds itself to the agent's config file, checks the credentials and copies ready-made prompts for you.
@@ -338,8 +338,8 @@ Errors are JSON on stderr: `{"error":{"kind","code","message","status","fields",
 | `dna domain` | search, bulk search, list, info, register, renew, transfer, restore, lock, privacy, auth code, contacts, documents, forwarding, nameservers, child hosts |
 | `dna dns` · `dna dnssec` | zone records, DS records |
 | `dna contact` | contact handles and verification |
-| `dna ssl` | CSR, buy, configure, status, download, reissue, revoke |
-| `dna hosting` · `dna product` · `dna order` · `dna account` | hosting, catalogue and prices, orders, balance and transactions |
+| `dna ssl` | list, CSR, buy, configure, status, download, renew, reissue, revoke |
+| `dna hosting` · `dna product` · `dna order` · `dna account` | hosting, catalogue and prices, orders, profile, balance and transactions |
 | `dna api` | raw request to any endpoint |
 | `dna schema` · `dna enums` · `dna agent` · `dna mcp` | for agents and tools |
 | `dna auth` · `dna config` · `dna doctor` | credentials, profiles, diagnostics |

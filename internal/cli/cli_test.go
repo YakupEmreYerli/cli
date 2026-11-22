@@ -399,3 +399,68 @@ func TestInteractiveConfirmation(t *testing.T) {
 		}
 	}
 }
+
+func TestSSLUsesCertificateID(t *testing.T) {
+	const id = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+	api := newFakeAPI(t)
+	api.json("PUT /api/v1/ssls/check-status", `{"certificateId":"`+id+`","domainName":"example.com","status":"Active"}`)
+	api.json("GET /api/v1/ssls", `{"totalCount":1,"items":[{"certificateId":"`+id+`","domainName":"example.com","status":"Active"}]}`)
+	api.json("POST /api/v1/ssls/renew", `{"success":true,"certificateId":"99999999-5717-4562-b3fc-2c963f66afa6","status":"WaitingForInstall"}`)
+	api.json("DELETE /api/v1/ssls/revoke", `{"success":true}`)
+	api.json("GET /api/v1/ssls/approvers", `{"mails":["admin@example.com"]}`)
+
+	r := run(t, api, nil, "", "ssl", "status", id)
+	if r.code != 0 || api.last().Body != `{"certificateId":"`+id+`"}` {
+		t.Fatalf("status: exit %d body %s err %s", r.code, api.last().Body, r.stderr)
+	}
+
+	// A domain name is what scripts written for the old API pass. Nothing is
+	// sent and the error says how to find the ID.
+	before := len(api.all())
+	r = run(t, api, nil, "", "ssl", "status", "example.com")
+	if r.code != ExitUsage || len(api.all()) != before {
+		t.Fatalf("status with a domain: exit %d, sent %d", r.code, len(api.all())-before)
+	}
+	if !strings.Contains(r.stderr, "dna ssl list example.com") {
+		t.Errorf("no pointer to the lookup: %s", r.stderr)
+	}
+
+	r = run(t, api, nil, "", "ssl", "list", "example.com", "--jq", ".items[0].certificateId")
+	if r.code != 0 || strings.TrimSpace(r.stdout) != id || api.last().Query != "DomainName=example.com" {
+		t.Errorf("list: exit %d out %q query %q err %s", r.code, r.stdout, api.last().Query, r.stderr)
+	}
+
+	// Renewing charges the balance, revoking cannot be undone: both stop
+	// until confirmed.
+	before = len(api.all())
+	if r = run(t, api, nil, "", "ssl", "renew", id); r.code != ExitConfirmation || len(api.all()) != before {
+		t.Errorf("renew without --yes: exit %d, sent %d", r.code, len(api.all())-before)
+	}
+	if r = run(t, api, nil, "", "ssl", "renew", id, "--yes"); r.code != 0 || api.last().Body != `{"certificateId":"`+id+`"}` {
+		t.Errorf("renew: exit %d body %s err %s", r.code, api.last().Body, r.stderr)
+	}
+	if r = run(t, api, nil, "", "ssl", "revoke", id, "--yes"); r.code != 0 || api.last().Query != "CertificateId="+id || api.last().Body != "" {
+		t.Errorf("revoke: exit %d query %q body %q err %s", r.code, api.last().Query, api.last().Body, r.stderr)
+	}
+
+	if r = run(t, api, nil, "", "ssl", "approvers", "--certificate-id", id); r.code != 0 || api.last().Query != "CertificateId="+id {
+		t.Errorf("approvers by certificate: exit %d query %q err %s", r.code, api.last().Query, r.stderr)
+	}
+	if r = run(t, api, nil, "", "ssl", "approvers", "example.com", "--package-code", "positivessl"); r.code != 0 ||
+		api.last().Query != "DomainName=example.com&PackageCode=positivessl" {
+		t.Errorf("approvers before buying: exit %d query %q err %s", r.code, api.last().Query, r.stderr)
+	}
+	before = len(api.all())
+	if r = run(t, api, nil, "", "ssl", "approvers", "example.com"); r.code != ExitUsage || len(api.all()) != before {
+		t.Errorf("approvers without a package code: exit %d, sent %d", r.code, len(api.all())-before)
+	}
+}
+
+func TestAccountProfile(t *testing.T) {
+	api := newFakeAPI(t)
+	api.json("GET /api/v1/resellers/me", `{"id":"`+testReseller+`","name":"Example","accountCurrency":2,"status":0,"isMcpEnabled":true}`)
+	r := run(t, api, nil, "", "account", "profile", "--jq", ".isMcpEnabled")
+	if r.code != 0 || strings.TrimSpace(r.stdout) != "true" || api.last().Path != "/api/v1/resellers/me" {
+		t.Errorf("exit %d out %q path %s err %s", r.code, r.stdout, api.last().Path, r.stderr)
+	}
+}

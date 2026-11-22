@@ -250,6 +250,68 @@ func prepareBulkSearch(in Input) error {
 	return nil
 }
 
+// isUUID reports whether s has the 8-4-4-4-12 hexadecimal shape of a GUID.
+func isUUID(s string) bool {
+	if len(s) != 36 {
+		return false
+	}
+	for i, r := range s {
+		switch i {
+		case 8, 13, 18, 23:
+			if r != '-' {
+				return false
+			}
+		default:
+			if !(r >= '0' && r <= '9' || r >= 'a' && r <= 'f' || r >= 'A' && r <= 'F') {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// prepareCertificateID rejects a certificateId that is not a GUID before
+// anything is sent. Certificates used to be addressed by domain name, so a
+// domain is the likely mistake and the error says where to find the ID.
+func prepareCertificateID(in Input) error {
+	raw, ok := in["certificateId"]
+	if !ok || isEmpty(raw) {
+		return nil // validation reports a missing required value
+	}
+	id := strings.TrimSpace(fmt.Sprint(raw))
+	if isUUID(id) {
+		in["certificateId"] = id
+		return nil
+	}
+	lookup := "`dna ssl list`"
+	if strings.Contains(id, ".") && !strings.ContainsAny(id, " \t/") {
+		lookup = "`dna ssl list " + id + "`"
+	}
+	return fmt.Errorf("certificateId: %q is not a certificate ID (a GUID such as 3fa85f64-5717-4562-b3fc-2c963f66afa6). "+
+		"Certificates are addressed by ID, not by domain name: find it with %s", id, lookup)
+}
+
+// prepareApprovers checks the two ways of asking for approver addresses: by
+// certificateId for a certificate that exists, or by domain name and package
+// code before buying one.
+func prepareApprovers(in Input) error {
+	if err := prepareCertificateID(in); err != nil {
+		return err
+	}
+	if !isEmpty(in["certificateId"]) {
+		return nil
+	}
+	if isEmpty(in["domainName"]) {
+		return fmt.Errorf("certificateId or domainName is required: certificateId for a certificate you bought, " +
+			"domainName with packageCode before buying one")
+	}
+	if isEmpty(in["packageCode"]) {
+		return fmt.Errorf("packageCode: is required with domainName (the package you are about to buy, from `dna product ssls`). " +
+			"For a certificate you already bought, pass certificateId instead")
+	}
+	return nil
+}
+
 func setDefault(in Input, key string, v any) {
 	if cur, ok := in[key]; !ok || isEmpty(cur) {
 		in[key] = v

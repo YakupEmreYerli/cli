@@ -27,17 +27,17 @@
 
 <p align="center">
   <b>dna</b>, <a href="https://www.domainnameapi.com">Domain Name API</a> bayi platformunu komut satırından ve yapay zeka ajanları üzerinden yönetir.
-  64 API işleminin tamamını kapsar: alan adı arama, kayıt, yenileme, transfer, DNS, DNSSEC, iletişim bilgileri, SSL ve hosting.
+  67 API işleminin tamamını kapsar: alan adı arama, kayıt, yenileme, transfer, DNS, DNSSEC, iletişim bilgileri, SSL ve hosting.
   <b>Claude Code, Claude Desktop, Cursor, Codex</b> veya herhangi bir MCP istemcisine bağlayın; her işlem güvenli ve iyi tanımlanmış bir araca dönüşsün.
 </p>
 
-<img src="./assets/tr/stats.svg" width="1200" alt="64 API işlemi, yapay zeka ajanları için 65 MCP aracı, zorunlu kılınan 4 güvenlik sınıfı, tek bir ikili dosyayla 6 platform.">
+<img src="./assets/tr/stats.svg" width="1200" alt="67 API işlemi, yapay zeka ajanları için 68 MCP aracı, zorunlu kılınan 4 güvenlik sınıfı, tek bir ikili dosyayla 6 platform.">
 
 ## <img src="./assets/h-agent.svg" width="30" height="30" alt=""> Yapay zeka ajanları için tasarlandı
 
 |  | Bir ajanın elde ettikleri |
 |---|---|
-| 🧰 **Her işlem için bir araç** | `dna mcp serve`, API spesifikasyonundan üretilen JSON Schema'larla 65 MCP aracı sunar; böylece modeller girdileri ilk seferde doğru doldurur. |
+| 🧰 **Her işlem için bir araç** | `dna mcp serve`, API spesifikasyonundan üretilen JSON Schema'larla 68 MCP aracı sunar; böylece modeller girdileri ilk seferde doğru doldurur. |
 | 🛡️ **Bir güvenlik kapısı** | Ücretli ve yıkıcı çağrılar asla kendiliğinden çalışmaz. CLI `--yes`, MCP ise `confirm=true` ister; bu olmadan ajan, size göstermesi için bir önizleme alır. |
 | 🧾 **Her şey makine tarafından okunabilir** | Pipe ile aktarıldığında JSON çıktı, sabit çıkış kodlarıyla JSON hatalar, isteğin birebir hali için `--dry-run` ve her girdi için `dna schema`. |
 | 🧪 **Bir test alanı** | `--env ote` test ortamını (OTE) hedefler: gerçek API, gerçek para yok. `--read-only` her değişikliği engeller. |
@@ -127,7 +127,7 @@ Betikler ve AI ajanları kabuğu hiç görmez: çıktı bir pipe’a gidiyorsa y
 
 ## <img src="./assets/h-mcp.svg" width="30" height="30" alt=""> Yapay zeka ajanınızı bağlayın
 
-<img src="./assets/tr/mcp.svg" width="1200" alt="Model Context Protocol: dna mcp serve, güvenlik etiketleriyle 65 araç sunar. confirm olmadan yapılan ücretli bir araç çağrısı önizleme döndürür; onaydan sonra confirm=true ile çalışır.">
+<img src="./assets/tr/mcp.svg" width="1200" alt="Model Context Protocol: dna mcp serve, güvenlik etiketleriyle 68 araç sunar. confirm olmadan yapılan ücretli bir araç çağrısı önizleme döndürür; onaydan sonra confirm=true ile çalışır.">
 
 > [!TIP]
 > **En hızlı yol:** `dna` çalıştırın, ↓ tuşuna basın ve **Connect an AI agent** seçin (ya da `/agent` yazın). 20’den fazla ajandan birini, OTE ya da production ortamını ve ajanın ne kadar yetkili olacağını seçin. dna kurulumu çalıştırır ya da kendini ajanın yapılandırma dosyasına ekler, kimlik bilgilerini kontrol eder ve hazır promptları sizin için kopyalar.
@@ -339,8 +339,8 @@ Hatalar stderr'e JSON olarak yazılır: `{"error":{"kind","code","message","stat
 | `dna domain` | arama, toplu arama, listeleme, bilgi, kayıt, yenileme, transfer, geri yükleme, kilit, gizlilik, transfer kodu (auth code), iletişim bilgileri, belgeler, yönlendirme, ad sunucuları (nameserver), child host'lar |
 | `dna dns` · `dna dnssec` | bölge (zone) kayıtları, DS kayıtları |
 | `dna contact` | iletişim kişisi tanımlayıcıları (handle) ve doğrulama |
-| `dna ssl` | CSR, satın alma, yapılandırma, durum, indirme, yeniden düzenleme (reissue), iptal |
-| `dna hosting` · `dna product` · `dna order` · `dna account` | hosting, katalog ve fiyatlar, siparişler, bakiye ve hesap hareketleri |
+| `dna ssl` | listeleme, CSR, satın alma, yapılandırma, durum, indirme, yenileme, yeniden düzenleme (reissue), iptal |
+| `dna hosting` · `dna product` · `dna order` · `dna account` | hosting, katalog ve fiyatlar, siparişler, profil, bakiye ve hesap hareketleri |
 | `dna api` | herhangi bir uç noktaya ham istek |
 | `dna schema` · `dna enums` · `dna agent` · `dna mcp` | ajanlar ve araçlar için |
 | `dna auth` · `dna config` · `dna doctor` | kimlik bilgileri, profiller, tanılama |

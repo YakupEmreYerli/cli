@@ -63,15 +63,25 @@ func flagName(key string) string {
 	return sb.String()
 }
 
+// argUsage renders a positional argument for a usage line: <name>, or [name]
+// when the registry marks the input as optional.
+func argUsage(op *ops.Operation, arg string) string {
+	key := strings.TrimSuffix(arg, "...")
+	usage := "<" + argName(key) + ">"
+	if op.Fields[key].Optional {
+		usage = "[" + argName(key) + "]"
+	}
+	if strings.HasSuffix(arg, "...") {
+		usage += "..."
+	}
+	return usage
+}
+
 func useLine(op *ops.Operation) string {
 	path := op.CommandPath()
 	parts := []string{path[len(path)-1]}
 	for _, a := range op.Args {
-		if strings.HasSuffix(a, "...") {
-			parts = append(parts, "<"+argName(strings.TrimSuffix(a, "..."))+">...")
-		} else {
-			parts = append(parts, "<"+argName(a)+">")
-		}
+		parts = append(parts, argUsage(op, a))
 	}
 	return strings.Join(parts, " ")
 }

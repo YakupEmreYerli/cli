@@ -4,6 +4,16 @@
 
 The API sends these fields as numbers (or accepts only these words). Flags and MCP tools accept the names as well; `dna enums <Name>` prints the same list.
 
+## AccountCurrency
+
+Currency a reseller account is kept in (ResellerMeDto.accountCurrency).
+
+| value | name | meaning |
+|---:|---|---|
+| 1 | `TRY` |  |
+| 2 | `USD` |  |
+| 3 | `EURO` |  |
+
 ## AuthenticationType
 
 SSL domain control validation method (authenticationType).
@@ -295,6 +305,17 @@ DNS zone record type (ZoneCreateDto.type). The API is case-sensitive; the CLI no
 | `RT` |  |
 | `TLSA` |  |
 | `X25` |  |
+
+## ResellerStatus
+
+State of a reseller account (ResellerMeDto.status).
+
+| value | name | meaning |
+|---:|---|---|
+| 0 | `Active` |  |
+| 1 | `WaitingForApproval` | E-mail or SMS verification pending |
+| 2 | `Suspend` | Access suspended |
+| 3 | `WaitingForCompletionWizard` | Sign-up wizard not finished |
 
 ## TransactionStatus
 

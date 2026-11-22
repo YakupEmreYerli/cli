@@ -2,6 +2,7 @@ package ops
 
 import (
 	"encoding/json"
+	"errors"
 	"reflect"
 	"strings"
 	"testing"
@@ -261,5 +262,101 @@ func TestEveryIntegerEnumIsDocumented(t *testing.T) {
 				t.Errorf("%s: query parameter %s has enum values %v but no Field.Enum in the registry", op.ID, p.Name, ps.Enum)
 			}
 		}
+	}
+}
+
+func TestSSLCertificateID(t *testing.T) {
+	const id = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+
+	// Body operations carry certificateId in the body, query operations as
+	// the CertificateId parameter; the ID is trimmed on the way.
+	req, err := mustOp(t, "ssl.status").BuildRequest(Input{"certificateId": " " + id + " "})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := req.Body.(map[string]any)["certificateId"]; req.Method != "PUT" || got != id {
+		t.Errorf("ssl.status: %s body %v", req.Method, req.Body)
+	}
+	for _, opID := range []string{"ssl.get", "ssl.content", "ssl.revoke"} {
+		req, err := mustOp(t, opID).BuildRequest(Input{"certificateId": id})
+		if err != nil {
+			t.Fatalf("%s: %v", opID, err)
+		}
+		if req.Query.Get("CertificateId") != id || req.Query.Get("DomainName") != "" {
+			t.Errorf("%s: query %v", opID, req.Query)
+		}
+	}
+	req, err = mustOp(t, "ssl.renew").BuildRequest(Input{"certificateId": id})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if req.Path != "/api/v1/ssls/renew" || req.Body.(map[string]any)["certificateId"] != id || req.Idempotent {
+		t.Errorf("ssl.renew: %+v", req)
+	}
+	if op := mustOp(t, "ssl.renew"); op.Safety != Billable {
+		t.Errorf("ssl.renew safety = %s, want billable", op.Safety)
+	}
+
+	// A domain name where the ID belongs is the mistake old scripts make: it
+	// is rejected before anything is sent, with a pointer to the lookup.
+	for _, opID := range []string{"ssl.status", "ssl.get", "ssl.content", "ssl.configure", "ssl.reissue", "ssl.revoke", "ssl.renew"} {
+		_, err := mustOp(t, opID).BuildRequest(Input{"certificateId": "example.com", "csr": "x", "contact": map[string]any{}})
+		var ie *InputError
+		if !errors.As(err, &ie) || !strings.Contains(err.Error(), "is not a certificate ID") || !strings.Contains(err.Error(), "dna ssl list example.com") {
+			t.Errorf("%s with a domain name: %v", opID, err)
+		}
+	}
+	_, err = mustOp(t, "ssl.status").BuildRequest(Input{"domainName": "example.com"})
+	if err == nil || !strings.Contains(err.Error(), "domainName") {
+		t.Errorf("ssl.status still accepts domainName: %v", err)
+	}
+	_, err = mustOp(t, "ssl.status").BuildRequest(Input{})
+	if err == nil || !strings.Contains(err.Error(), "certificateId: is required") {
+		t.Errorf("ssl.status without an ID: %v", err)
+	}
+}
+
+func TestSSLApproversAndList(t *testing.T) {
+	const id = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+	op := mustOp(t, "ssl.approvers")
+
+	req, err := op.BuildRequest(Input{"certificateId": id})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if req.Query.Encode() != "CertificateId="+id {
+		t.Errorf("by certificate: %v", req.Query)
+	}
+	req, err = op.BuildRequest(Input{"domainName": "example.com", "packageCode": "positivessl"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if req.Query.Get("DomainName") != "example.com" || req.Query.Get("PackageCode") != "positivessl" {
+		t.Errorf("before buying: %v", req.Query)
+	}
+	for name, in := range map[string]Input{
+		"nothing":             {},
+		"domain without code": {"domainName": "example.com"},
+		"code without domain": {"packageCode": "positivessl"},
+		"domain as the ID":    {"certificateId": "example.com"},
+	} {
+		if _, err := op.BuildRequest(in); err == nil {
+			t.Errorf("%s: accepted", name)
+		}
+	}
+
+	list := mustOp(t, "ssl.list")
+	if !list.Paged() || list.Safety != Read {
+		t.Errorf("ssl.list: paged %v safety %s", list.Paged(), list.Safety)
+	}
+	req, err = list.BuildRequest(Input{"domainName": "example.com", "maxResultCount": 50})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if req.Method != "GET" || req.Path != "/api/v1/ssls" || req.Query.Get("DomainName") != "example.com" || req.Query.Get("MaxResultCount") != "50" {
+		t.Errorf("ssl.list: %+v", req)
+	}
+	if req, err = list.BuildRequest(Input{}); err != nil || len(req.Query) != 0 {
+		t.Errorf("ssl.list without a filter: %v %v", req, err)
 	}
 }

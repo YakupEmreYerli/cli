@@ -27,17 +27,17 @@
 
 <p align="center">
   <b>dna</b> 让你可以通过命令行和 AI 智能体操作 <a href="https://www.domainnameapi.com">Domain Name API</a> 经销商平台。
-  它覆盖全部 64 个 API 操作：域名搜索、注册、续费、转移、DNS、DNSSEC、联系人、SSL 和主机。
+  它覆盖全部 67 个 API 操作：域名搜索、注册、续费、转移、DNS、DNSSEC、联系人、SSL 和主机。
   将它接入 <b>Claude Code、Claude Desktop、Cursor、Codex</b> 或任意 MCP 客户端，每个操作都会成为一个安全且描述清晰的工具。
 </p>
 
-<img src="./assets/cn/stats.svg" width="1200" alt="64 个 API 操作，65 个面向 AI 智能体的 MCP 工具，4 个强制执行的安全类别，一个二进制文件支持 6 个平台。">
+<img src="./assets/cn/stats.svg" width="1200" alt="67 个 API 操作，68 个面向 AI 智能体的 MCP 工具，4 个强制执行的安全类别，一个二进制文件支持 6 个平台。">
 
 ## <img src="./assets/h-agent.svg" width="30" height="30" alt=""> 专为 AI 智能体打造
 
 |  | 智能体能获得什么 |
 |---|---|
-| 🧰 **每个操作对应一个工具** | `dna mcp serve` 提供 65 个 MCP 工具，其 JSON Schema 均根据 API 规范生成，模型第一次就能正确填写输入。 |
+| 🧰 **每个操作对应一个工具** | `dna mcp serve` 提供 68 个 MCP 工具，其 JSON Schema 均根据 API 规范生成，模型第一次就能正确填写输入。 |
 | 🛡️ **安全闸门** | 需付费和破坏性的调用绝不会自行执行。CLI 需要 `--yes`，MCP 需要 `confirm=true`；缺少时，智能体只会得到一份可以展示给你的预览。 |
 | 🧾 **一切皆可机器读取** | 通过管道输出时为 JSON，错误同样是 JSON 并带有稳定的退出码，`--dry-run` 显示确切的请求，`dna schema` 提供每个输入的 Schema。 |
 | 🧪 **沙盒环境** | `--env ote` 指向测试环境：真实的 API，不花真钱。`--read-only` 阻止一切更改。 |
@@ -127,7 +127,7 @@ dna domain list
 
 ## <img src="./assets/h-mcp.svg" width="30" height="30" alt=""> 连接你的 AI 智能体
 
-<img src="./assets/cn/mcp.svg" width="1200" alt="Model Context Protocol：dna mcp serve 提供 65 个带安全注解的工具。不带 confirm 的付费工具调用会返回预览；获得批准后带上 confirm=true 才会执行。">
+<img src="./assets/cn/mcp.svg" width="1200" alt="Model Context Protocol：dna mcp serve 提供 68 个带安全注解的工具。不带 confirm 的付费工具调用会返回预览；获得批准后带上 confirm=true 才会执行。">
 
 > [!TIP]
 > **最快的方法：** 运行 `dna`，按 ↓ 并选择 **Connect an AI agent**（或输入 `/agent`）。从 20 多个智能体中选择一个，选择 OTE 或生产环境以及它的权限范围。dna 会执行配置或把自己加入智能体的配置文件，检查凭据，并为你复制现成的提示词。
@@ -332,8 +332,8 @@ dna enums DomainStatus                        # 查看状态 7 的含义
 | `dna domain` | 搜索、批量搜索、列表、信息、注册、续费、转移、恢复、锁定、隐私保护、授权码、联系人、文档、转发、名称服务器、子名称服务器 |
 | `dna dns` · `dna dnssec` | 区域记录、DS 记录 |
 | `dna contact` | 联系人句柄（handle）与验证 |
-| `dna ssl` | CSR、购买、配置、状态、下载、重新签发、吊销 |
-| `dna hosting` · `dna product` · `dna order` · `dna account` | 主机、产品目录与价格、订单、余额与交易记录 |
+| `dna ssl` | 列表、CSR、购买、配置、状态、下载、续费、重新签发、吊销 |
+| `dna hosting` · `dna product` · `dna order` · `dna account` | 主机、产品目录与价格、订单、账户资料、余额与交易记录 |
 | `dna api` | 向任意端点发送原始请求 |
 | `dna schema` · `dna enums` · `dna agent` · `dna mcp` | 供智能体和工具使用 |
 | `dna auth` · `dna config` · `dna doctor` | 凭据、配置文件、诊断 |
